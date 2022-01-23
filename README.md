@@ -5,7 +5,7 @@ This project deploys a LoRaWAN gateway with UDP Packet Forwarder protocol using 
 
 ## Introduction
 
-Deploy a LoRaWAN gateway running the UDP Packet Forwarder protocol in a docker container inside your Raspberry Pi or compatible SBC.
+Deploy a LoRaWAN gateway running the UDP Packet Forwarder protocol in a docker container in your computer, Raspberry Pi or compatible SBC.
 
 This project is based on rak-common-for-gateway project (https://github.com/RAKWireless/rak-common-for-gateway).
 
@@ -149,9 +149,13 @@ Variable Name | Value | Description | Default
 Notes: 
 
 > At least `MODEL` or `CONCENTRATOR` must be defined.
+
 > The list of supported modules is at the top of this page (either RAK Wisgate Developer model numbers or RAK WisLink modules). If your device is not in the list you can manually define `CONCENTRATOR`, `INTERFACE`, `HAS_GPS`, `HAS_LTE` and `GW_RESET_GPIO`.
+
 > The service will generate a Gateway EUI based on an existing interface. It will try to find `eth0`, `wlan0` or `usb0`. If neither of these is available it will try to identify the most used existing interface. But this approach is not recommended, instead define a specific and unique custom `GATEWAY_EUI` or identify the interface you want the service to use to generate it by setting `GATEWAY_EUI_NIC`.
+
 > The `BAND` can be one of these values: `as_915_921`, `as_915_928`, `as_917_920`, `as_920_923`, `au_915_928`, `cn_470_510`, `eu_433`, `eu_863_870`, `in_865_867`, `kr_920_923`, `ru_864_870`, and `us_902_928`.
+
 > When using The Things Stack Community Edition the `SERVER_HOST` and `SERVER_PORT` values are automatically populated to use `udp://eu1.cloud.thethings.network:1700`. If your region is not EU you can set it using ```TTN_REGION```. At the moment there is only one server avalable is ```eu1```.
 
 
@@ -161,7 +165,6 @@ The LoRa gateways are manufactured with a unique 64 bits (8 bytes) identifier, c
 
 ```
 docker exec -it udp-packet-forwarder ./info.sh
-
 ```
 
 ### Register your gateway to The Things Stack
