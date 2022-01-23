@@ -1,0 +1,19 @@
+diff --git a/lora/rak2247_usb/install.sh b/lora/rak2247_usb/install.sh
+index 91dbbf7..d69a214 100755
+--- a/lora/rak2247_usb/install.sh
++++ b/lora/rak2247_usb/install.sh
+@@ -24,11 +24,11 @@ apt-get -y install git libftdi-dev libusb-dev
+ if [ ! -d libmpsse ]; then
+     git clone https://github.com/devttys0/libmpsse.git
+ 	# judge RPiOS64
+-	uname -a | grep aarch64
+-	if [ $? -eq 0 ] ;then
++	#uname -a | grep aarch64
++	#if [ $? -eq 0 ] ;then
+ 		cp -f mpsse.h libmpsse/src
+ 		cp -f fast.c libmpsse/src
+-	fi
++	#fi
+ fi
+ pushd libmpsse/src
+ ./configure --disable-python
