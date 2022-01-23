@@ -22,7 +22,7 @@ manifests:
     platform:
       architecture: arm64
       os: linux  
-  - image: $REGISTRY:armv7hf
+  - image: $REGISTRY:arm
     platform:
       architecture: arm
       os: linux  

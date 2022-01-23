@@ -3,17 +3,17 @@ variable "BUILD_DATE" { default = "" }
 variable "REGISTRY" { default = "rakwireless/udp-packet-forwarder" }
 
 group "default" {
-    targets = ["armv7hf", "aarch64", "amd64"]
+    targets = ["arm", "aarch64", "amd64"]
 }
 
-target "armv7hf" {
-    tags = ["${REGISTRY}:armv7hf"]
+target "arm" {
+    tags = ["${REGISTRY}:arm"]
     args = {
-        "ARCH" = "armv7hf",
+        "ARCH" = "rpi",
         "TAG" = "${TAG}",
         "BUILD_DATE" = "${BUILD_DATE}"
     }
-    platforms = ["linux/arm/v7"]
+    platforms = ["linux/arm"]
 }
 
 target "aarch64" {
