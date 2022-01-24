@@ -17,8 +17,12 @@ This project has been tested with The Things Stack Community Edition (TTSCE or T
 
 ### Hardware
 
-* Raspberry Pi 3/4 or Compute Module 3/4
-* SD card in case of the RPi 3/4
+The UDP Packet Forwarder service can run on:
+
+* AMD64: most PCs out there
+* ARMv8: Raspberry Pi 3/4, 400, Compute Module 3/4, Zero 2 W,...
+* ARVv7: Raspberry Pi 2
+* ARMv6: Raspberry Pi Zero, Zero W
 
 
 #### LoRa Concentrators
@@ -45,27 +49,19 @@ Supported RAK LoRa concentrators:
 * SX1308
   * RAK2246
 
-**NOTE**: This project focuses on RAKwireless products but products from other manufacturers should also work. You will have to provide the some information to configure them properly, like concentrator type, interface type, reset GPIO,...
+> **NOTE**: This project focuses on RAKwireless products but products from other manufacturers should also work. You will have to provide the some information to configure them properly, like concentrator type, interface type, reset GPIO,...
+
+> **NOTE**: SPI concentrators in MiniPCIe form factor will require a special Hat or adapter to connect them to the SPI interface in the SBC. USB concentrators in MiniPCIe form factor will require a USB adapter to connect them to a USB2/3 socket on the SBC.
+
 
 ### Software
 
-If you are going to use docker to deploy the project, you will need:
-
-* An OS image for your board (Raspberry Pi OS, Ubuntu OS for ARM,...)
-* Docker (and optionally docker-compose) on the machine (see below for instal·lation instructions)
-
-On both cases you will also need:
-
-* A The Things Stack V3 account [here](https://ttc.eu1.cloud.thethings.industries/console/)
-* [balenaEtcher](https://balena.io/etcher) to burn the image on the SD
-
-
-Once all of this is ready, you are able to deploy this repository following instructions below.
+You will need docker and docker-compose (optional but recommended) on the machine (see below for instal·lation instructions). You will also need a an account at a LoRaWAN Network Server, for instance a [The Things Stack V3 account](https://console.cloud.thethings.network/).
 
 
 ## Installing docker & docker-compose on the OS
 
-If you are going to run this project you will need to install docker on the OS first. This is pretty staring forward, just follow these instructions:
+If you don't have docker running on the machine you will need to install docker on the OS first. This is pretty staring forward, just follow these instructions:
 
 ```
 sudo apt-get update && sudo apt-get upgrade -y
@@ -116,7 +112,7 @@ In case you can not pull the already built image from Docker Hub or if you want 
 docker buildx bake --load aarch64
 ```
 
-Once built (it will take some minutes) you can bring it up by using `rakwireless/udp-packet-forwarder:aarch64` as the image name in your `docker-compose.yml` file. If you are not in an ARMv8 64 bits machine (like a Raspberry Pi 4) you can change the `aarch64` with `armv7hf` (ARMv7) or `amd64`.
+Once built (it will take some minutes) you can bring it up by using `rakwireless/udp-packet-forwarder:aarch64` as the image name in your `docker-compose.yml` file. If you are not in an ARMv8 64 bits machine (like a Raspberry Pi 4) you can change the `aarch64` with `arm` (ARMv6 and ARMv7) or `amd64`.
 
 ## Configure the Gateway
 
@@ -130,13 +126,13 @@ Variable Name | Value | Description | Default
 **`CONCENTRATOR`** | `STRING` | Semtech concentrator used (`SX1301`, `SX1302`, `SX1303` or `SX1308`) | If `MODEL` is defined it will get the concentrator from it
 **`INTERFACE`** | `SPI` or `USB` | Concentrator interface | If `MODEL` is defined it will get the interface type from it, otherwise defaults to `SPI`
 **`HAS_GPS`** | 0 or 1 | Set to 1 if the gateway has GPS | If `MODEL` is defined it will get this from it, otherwise defaults to 1 (with GPS)
-**`HAS_LTE`** | 0 or 1 | Set to 1 if the gateway has LTE connectivity | If `MODEL` id defined it will get this from it, otherwise defaults to 0 (without LTE)
-**`RESET_GPIO`** | `INT` | GPIO number that resets (Broadcom pin number, if not defined, it's calculated based on the RESET_PIN) | 17
+**`HAS_LTE`** | 0 or 1 | Set to 1 if the gateway has LTE connectivity | If `MODEL` is defined it will get this from it, otherwise defaults to 0 (without LTE)
+**`RESET_GPIO`** | `INT` | GPIO number that resets (Broadcom pin number) | 17
 **`POWER_EN_GPIO`** | `INT` | GPIO number that enables power (by pulling HIGH) to the concentrator (Broadcom pin number). 0 means not required | 0
 **`RADIO_DEV`** | `STRING` | Where the concentrator is connected to. Don't set it if you don't know what this means | `/dev/spidev0.0` for SPI concentrators, `/dev/ttyACM0` for USB concentrators
 **`GPS_DEV`** | `STRING` | Where the GPS is connected to. Don't set it if you don't know what this means | `/dev/ttyAMA0` except when HAS_LTE is 1, in this case it will default to `/dev/i2c-1`
 **`GATEWAY_EUI_NIC`** | `STRING` | Interface to use when generating the EUI | `eth0`
-**`GATEWAY_EUI`** | `STRING` | Gateway EUI to use | Autogenerated from `GATEWAY_EUI_NIC` if defined or the any of these: `eth0`, `wlan0`, `usb0`
+**`GATEWAY_EUI`** | `STRING` | Gateway EUI to use | Autogenerated from `GATEWAY_EUI_NIC` if defined, otherwise in order from: `eth0`, `wlan0`, `usb0`
 **`TTN_REGION`** | `STRING` | If using a TTN server, region of the TTN server to use | `eu1`
 **`SERVER_HOST`** | `STRING` | URL of the server | If `TTN_REGION` is defined it will build the right address for the TTN server
 **`SERVER_PORT`** | `INT` | Port the server is listening to | 1700
@@ -155,9 +151,9 @@ Notes:
 
 > The `BAND` can be one of these values: `as_915_921`, `as_915_928`, `as_917_920`, `as_920_923`, `au_915_928`, `cn_470_510`, `eu_433`, `eu_863_870`, `in_865_867`, `kr_920_923`, `ru_864_870`, and `us_902_928`.
 
-> When using The Things Stack Community Edition the `SERVER_HOST` and `SERVER_PORT` values are automatically populated to use `udp://eu1.cloud.thethings.network:1700`. If your region is not EU you can set it using ```TTN_REGION```. At the moment only these regions are available: `eu1`, `nam1` and `au1`.
+> `SERVER_HOST` and `SERVER_PORT` values default to The Things Stack Community Edition european server (`udp://eu1.cloud.thethings.network:1700`). If your region is not EU you can change it using ```TTN_REGION```. At the moment only these regions are available: `eu1`, `nam1` and `au1`.
 
-> If you have more than one concentrator on the same device, you will have to set different GATEWAY_EUI for each one and different `RADIO_DEV` values. Setting the `RADIO_DEV` only works with SX1302 and SX1303 concentrators. So you cannot use two SPI SX1301/SX1308 or two USB SX1301/SX1308 concentrators on the same device since they will both try to use the same port. But you can mix USB and SPI SX1301/SX1308 concentrators without problem.
+> If you have more than one concentrator on the same device, you will have to set different GATEWAY_EUI for each one and different `RADIO_DEV` values. Setting the `RADIO_DEV` only works with SX1302 and SX1303 concentrators. So you cannot use two SPI SX1301/SX1308 or two USB SX1301/SX1308 concentrators on the same device since they will both try to use the same port. But you can mix USB and SPI SX1301/SX1308 concentrators without problem. You can also provide a custom `global_conf.json` file to customize how every concentrator should behave. Check the `Use a custom radio configuration` section below.
 
 
 ### Get the EUI of the LoRa Gateway
