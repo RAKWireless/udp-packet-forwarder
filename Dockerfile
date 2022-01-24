@@ -10,7 +10,7 @@ ARG ARCH
 RUN install_packages libftdi-dev libusb-dev
 
 # Switch to working directory for our app
-WORKDIR /usr/src/app
+WORKDIR /app
 
 # Checkout and compile remote code
 COPY builder/* .
@@ -39,16 +39,16 @@ LABEL org.label-schema.license="BSD License 2.0"
 RUN install_packages jq vim libftdi1
 
 # Switch to working directory for our app
-WORKDIR /usr/src/app
+WORKDIR /app
 
 # Copy fles from builder and repo
-COPY --from=builder /usr/src/app/repo/lora/rak7243 ./rak7243
-COPY --from=builder /usr/src/app/repo/lora/rak2246 ./rak2246
-COPY --from=builder /usr/src/app/repo/lora/rak2247_usb ./rak2247_usb
-COPY --from=builder /usr/src/app/repo/lora/rak2247_spi ./rak2247_spi
-COPY --from=builder /usr/src/app/repo/lora/rak2287 ./rak2287
-COPY --from=builder /usr/src/app/repo/lora/rak5146 ./rak5146
-COPY --from=builder /usr/src/app/repo/lora/rak2247_usb/lora_gateway/libloragw/99-libftdi.rules /etc/udev/rules.d/99-libftdi.rules
+COPY --from=builder /app/repo/lora/rak7243 ./rak7243
+COPY --from=builder /app/repo/lora/rak2246 ./rak2246
+COPY --from=builder /app/repo/lora/rak2247_usb ./rak2247_usb
+COPY --from=builder /app/repo/lora/rak2247_spi ./rak2247_spi
+COPY --from=builder /app/repo/lora/rak2287 ./rak2287
+COPY --from=builder /app/repo/lora/rak5146 ./rak5146
+COPY --from=builder /app/repo/lora/rak2247_usb/lora_gateway/libloragw/99-libftdi.rules /etc/udev/rules.d/99-libftdi.rules
 COPY --from=builder /usr/local/lib/libmpsse.so /usr/local/lib/libmpsse.so
 COPY --from=builder /usr/local/lib/libmpsse.a /usr/local/lib/libmpsse.a
 COPY --from=builder /usr/local/include/mpsse.h /usr/local/include/mpsse.h

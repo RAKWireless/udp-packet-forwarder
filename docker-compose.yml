@@ -3,11 +3,16 @@ version: '3.7'
 services:
 
   udp-packet-forwarder:
+    
     image: rakwireless/udp-packet-forwarder:latest
     container_name: udp-packet-forwarder
     restart: unless-stopped
     privileged: true
     network_mode: host
+    
+    #volumes:
+    #  - ./global_conf.json:/app/global_conf.json:ro
+    
     environment:
       
       # To select your concentrator you have 3 options:

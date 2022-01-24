@@ -23,7 +23,7 @@ function idle {
 }
 
 # Load variables
-. ./info.sh
+source ./info.sh
 
 # Check we have defined a concentrator
 if [[ -z ${CONCENTRATOR} ]] ;
@@ -93,24 +93,27 @@ elif [[ "$CONCENTRATOR" == "SX1308" ]]; then
     GLOBAL_CONF="global_conf"
 fi
 
-# Link files based on configuration
+# Copy binaries based on configuration
 INSTALL_DIR=/opt/ttn-gateway
-GLOBAL_CONFIG_FILE=$INSTALL_DIR/packet_forwarder/lora_pkt_fwd/global_conf.json
-LOCAL_CONFIG_FILE=$INSTALL_DIR/packet_forwarder/lora_pkt_fwd/local_conf.json
-
 mkdir -p $INSTALL_DIR
 if [[ -d ./$FOLDER/lora_gateway ]]; then
     cp -rf ./$FOLDER/lora_gateway $INSTALL_DIR/
 fi
 cp -rf ./$FOLDER/packet_forwarder $INSTALL_DIR/
-cp -f ./$FOLDER/$GLOBAL_CONF/global_conf.$BAND.json $GLOBAL_CONFIG_FILE
 
-# Modify global configuration file
-if [ -n $RADIO_DEV ]; then
-    sed -i "s#\"com_path\":\s*.*,#\"com_path\": \"$RADIO_DEV\",#"  $GLOBAL_CONFIG_FILE
+# Global configuration file
+GLOBAL_CONFIG_FILE=$INSTALL_DIR/packet_forwarder/lora_pkt_fwd/global_conf.json
+if [[ -f ./global_conf.json ]]; then
+    cp -f ./global_conf.json $GLOBAL_CONFIG_FILE
+else
+    cp -f ./$FOLDER/$GLOBAL_CONF/global_conf.$BAND.json $GLOBAL_CONFIG_FILE
+    if [ -n $RADIO_DEV ]; then
+        sed -i "s#\"com_path\":\s*.*,#\"com_path\": \"$RADIO_DEV\",#"  $GLOBAL_CONFIG_FILE
+    fi
 fi
 
 # Modify local configuration file
+LOCAL_CONFIG_FILE=$INSTALL_DIR/packet_forwarder/lora_pkt_fwd/local_conf.json
 cat > $LOCAL_CONFIG_FILE << EOL
 {
     "gateway_conf": {

@@ -145,5 +145,8 @@ echo "Latitude:      $GPS_LATITUDE"
 echo "Longitude:     $GPS_LONGITUDE"
 echo "Altitude:      $GPS_ALTITUDE"
 fi 
+if [[ -f ./global_conf.json ]]; then
+echo "Custom global_conf.json found!"
+fi
 echo "------------------------------------------------------------------"
 

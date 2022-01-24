@@ -168,6 +168,35 @@ The LoRa gateways are manufactured with a unique 64 bits (8 bytes) identifier, c
 docker exec -it udp-packet-forwarder ./info.sh
 ```
 
+### Use a custom radio configuration
+
+In some special cases you might want to specify the radio configuration in detail (frequencies, power, ...). You can do that by providing a custom `global_conf.json` file. You can start by copying the default one based on your current configuration from a running instance of the service:
+
+```
+docker cp udp-packet-forwarder:/opt/ttn-gateway/packet_forwarder/lora_pkt_fwd/global_conf.json global_conf.json
+```
+
+Now you can modify it to match your needs. And finally define it as a mounted file in your `docker-compose.yml` file. When you do a `docker-compose up -d` it will use your custom file instead of a generated one.
+
+```
+version: '3.7'
+
+services:
+
+  udp-packet-forwarder:
+    image: rakwireless/udp-packet-forwarder:latest
+    container_name: udp-packet-forwarder
+    restart: unless-stopped
+    privileged: true
+    network_mode: host
+    volumes:
+      - ./global_conf.json:/app/global_conf.json:ro
+    environment:
+      MODEL: "RAK7248"
+```
+
+Please note that a `local_conf.json` file will still be generated and will overwrite some of the settings in the `global_conf.json`, but only in the `gateway_conf` section.
+
 ### Register your gateway to The Things Stack
 
 1. Sign up at [The Things Stack console](https://console.cloud.thethings.network/).
