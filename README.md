@@ -129,6 +129,7 @@ Variable Name | Value | Description | Default
 **`HAS_LTE`** | 0 or 1 | Set to 1 if the gateway has LTE connectivity | If `MODEL` is defined it will get this from it, otherwise defaults to 0 (without LTE)
 **`RESET_GPIO`** | `INT` | GPIO number that resets (Broadcom pin number) | 17
 **`POWER_EN_GPIO`** | `INT` | GPIO number that enables power (by pulling HIGH) to the concentrator (Broadcom pin number). 0 means not required | 0
+**`POWER_EN_LOGIC`** | `INT` | If `POWER_EN_GPIO` is not 0, the corresponding GPIO will be set to this value | 1
 **`RADIO_DEV`** | `STRING` | Where the concentrator is connected to. Don't set it if you don't know what this means | `/dev/spidev0.0` for SPI concentrators, `/dev/ttyACM0` for USB concentrators
 **`GPS_DEV`** | `STRING` | Where the GPS is connected to. Don't set it if you don't know what this means | `/dev/ttyAMA0` except when HAS_LTE is 1, in this case it will default to `/dev/i2c-1`
 **`GATEWAY_EUI_NIC`** | `STRING` | Interface to use when generating the EUI | `eth0`

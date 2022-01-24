@@ -7,8 +7,9 @@
 #  INTERFACE: this is the interface (SPI or USB, defaults to SPI)
 #  HAS_GPS: whether the gateway has GPS capabilities (0 or 1, defaults to 0)
 #  HAS_LTE: whether the gateway has LTE capabilities, if yes it will try to use the GPS in the gateway via I2C (0 or 1, defaults to 0)
-#  RESET_GPIO: defaults to 17
+#  RESET_GPIO: defaults to 17 if SPI, 0 otherwise
 #  POWER_EN_GPIO: defaults to 0
+#  POWER_EN_LOGIC: defaults to 1
 # Private variables
 #  MODULE: this is the RAKwireless module used in the gateway
 #  FOLDER: this is the folder with the binaries
@@ -48,23 +49,35 @@ if [[ -z ${MODULE} ]]; then
 fi
 CONCENTRATOR=${CONCENTRATOR:-${MODULE_CONCENTRATOR_MAP[$MODULE]}}
 
-# Exceptions
-if [[ "$MODULE" == "RAK2247" ]]; then
+# RAK2247 and RAK833 have no GPS
+if [[ "$MODULE" == "RAK2247" ]] || [[ "$MODULE" == "RAK833" ]]; then
     HAS_GPS=${HAS_GPS:-0}
 fi
 
-# Defaults
+# The rest default to SPI, with GPS and without LTE
 INTERFACE=${INTERFACE:-"SPI"}
 HAS_GPS=${HAS_GPS:-1}
 HAS_LTE=${HAS_LTE:-0}
 
-# Map hardware pins to GPIO on Raspberry Pi
-declare -a GPIO_MAP=( -1 -1 -1 2 -1 3 -1 4 14 -1 15 17 18 27 -1 22 23 -1 24 10 -1 9 25 11 8 -1 7 0 1 5 -1 6 12 13 -1 19 16 26 20 -1 21 )
-RESET_PIN=${RESET_PIN:-11}
-RESET_GPIO=${RESET_GPIO:-${GPIO_MAP[$RESET_PIN]}}
+# If interface is USB disable RESET_GPIO, otherwise default to 17
+if [[ "$INTERFACE" == "SPI" ]]; then
+    RESET_GPIO=${RESET_GPIO:-17}
+else
+    RESET_GPIO=${RESET_GPIO:-0}
+fi
 
-# Some board might have an enable GPIO
+# The RAK833-SPI/USB has a SPDT to select USB/SPI interfaces
+# If used with RAK2247 or RAK2287 hats this is wired to GPIO20
+if [[ "$MODULE" == "RAK833" ]]; then
+    if [[ "$INTERFACE" == "SPI" ]]; then
+        POWER_EN_GPIO=${POWER_EN_GPIO:-20}
+        POWER_EN_LOGIC=${POWER_EN_LOGIC:-0}
+    fi
+fi
+
+# Otherwise the default is no power enable pin
 POWER_EN_GPIO=${POWER_EN_GPIO:-0}
+POWER_EN_LOGIC=${POWER_EN_LOGIC:-1}
 
 # Get the Gateway EUI
 if [[ -z $GATEWAY_EUI ]]; then
@@ -83,13 +96,13 @@ if [[ -z $GATEWAY_EUI ]]; then
         GATEWAY_EUI_NIC=$(cat /proc/net/dev | tail -n+3 | sort -k2 -nr | head -n1 | cut -d ":" -f1 | sed 's/ //g')
     fi
     if [[ `grep "$GATEWAY_EUI_NIC" /proc/net/dev` == "" ]]; then
-        echo -e "\033[91mERROR: No network interface found. Cannot set gateway ID.\033[0m"
+        echo -e "\033[91mERROR: No network interface found. Cannot set gateway EUI.\033[0m"
     fi
     GATEWAY_EUI=$(ip link show $GATEWAY_EUI_NIC | awk '/ether/ {print $2}' | awk -F\: '{print $1$2$3"FFFE"$4$5$6}')
 fi
 GATEWAY_EUI=${GATEWAY_EUI^^}
 
-# Defaults to TTN server v3, EU1 region, use a custom SERVER_HOST to change this
+# Defaults to TTN server v3, EU1 region, use a custom SERVER_HOST and SERVER_PORT to change this
 TTN_REGION=${TTN_REGION:-"eu1"}
 SERVER_HOST=${SERVER_HOST:-"${TTN_REGION}.cloud.thethings.network"} 
 SERVER_PORT=${SERVER_PORT:-1700}
@@ -104,7 +117,7 @@ if [[ ! -z ${GPS_LATITUDE} ]]; then
     FAKE_GPS="true"
 fi
 
-# Get radio device
+# Default radio device (custom one has no effect for SX1301 and SX1308 concentrators)
 if [[ "$CONCENTRATOR" == "SX1301" ]] || [[ "$CONCENTRATOR" == "SX1308" ]]; then
     unset RADIO_DEV
 fi
@@ -114,7 +127,7 @@ else
     RADIO_DEV=${RADIO_DEV:-"/dev/ttyACM0"}
 fi
 
-# Get GPS device
+# Default GPS device based on LTE presence
 if [[ $HAS_LTE -eq 1 ]]; then
     GPS_DEV=${GPS_DEV:-"/dev/i2c-1"}
 else
@@ -123,30 +136,46 @@ fi
 
 # Debug
 echo "------------------------------------------------------------------"
+
 echo "Model:         $MODEL"
 echo "Module:        $MODULE"
 echo "Concentrator:  $CONCENTRATOR"
 echo "Interface:     $INTERFACE"
+
+if [[ "$CONCENTRATOR" == "SX1302" ]] || [[ "$CONCENTRATOR" == "SX1303" ]]; then
 echo "Radio Device:  $RADIO_DEV"
+fi
+
 echo "Has GPS:       $HAS_GPS"
 if [[ $HAS_GPS -eq 1 ]]; then
 echo "GPS Device:    $GPS_DEV"
 fi
+
 echo "Has LTE:       $HAS_LTE"
+
+if [[ "$INTERFACE" == "SPI" ]]; then
 echo "Reset GPIO:    $RESET_GPIO"
 echo "Enable GPIO:   $POWER_EN_GPIO"
+if [[ $POWER_EN_GPIO -ne 0 ]]; then
+echo "Enable Logic:  $POWER_EN_LOGIC"
+fi
+fi
+
 echo "Main NIC:      $GATEWAY_EUI_NIC"
 echo "Gateway EUI:   $GATEWAY_EUI"
 echo "Server:        $SERVER_HOST:$SERVER_PORT"
 echo "Band:          $BAND"
 echo "Use fake GPS:  $FAKE_GPS"
+
 if [[ "$FAKE_GPS" == "true" ]]; then
 echo "Latitude:      $GPS_LATITUDE"
 echo "Longitude:     $GPS_LONGITUDE"
 echo "Altitude:      $GPS_ALTITUDE"
 fi 
+
 if [[ -f ./global_conf.json ]]; then
 echo "Custom global_conf.json found!"
 fi
+
 echo "------------------------------------------------------------------"
 
