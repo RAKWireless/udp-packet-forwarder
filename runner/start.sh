@@ -105,6 +105,11 @@ fi
 cp -rf ./$FOLDER/packet_forwarder $INSTALL_DIR/
 cp -f ./$FOLDER/$GLOBAL_CONF/global_conf.$BAND.json $GLOBAL_CONFIG_FILE
 
+# Modify global configuration file
+if [ -n $RADIO_DEV ]; then
+    sed -i "s#\"com_path\":\s*.*,#\"com_path\": \"$RADIO_DEV\",#"  $GLOBAL_CONFIG_FILE
+fi
+
 # Modify local configuration file
 cat > $LOCAL_CONFIG_FILE << EOL
 {
@@ -113,12 +118,11 @@ cat > $LOCAL_CONFIG_FILE << EOL
         "server_address": "$SERVER_HOST",
         "serv_port_up": $SERVER_PORT,
         "serv_port_down": $SERVER_PORT,
+        "gps_tty_path": "$GPS_DEV",
         "fake_gps": $FAKE_GPS,
         "ref_latitude": ${GPS_LATITUDE:-0},
         "ref_longitude": ${GPS_LONGITUDE:-0},
-        "ref_altitude": ${GPS_ALTITUDE:-0},
-        "contact_email": "$EMAIL",
-        "description": "$DESCRIPTION"
+        "ref_altitude": ${GPS_ALTITUDE:-0}
     }
 }
 EOL

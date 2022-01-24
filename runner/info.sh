@@ -5,12 +5,12 @@
 #  MODEL: this is the RAKwireless gateway model
 #  CONCENTRATOR: this is the concentrator type (SX1301, SX1302, SX1303 or SX1308)
 #  INTERFACE: this is the interface (SPI or USB, defaults to SPI)
-#  GPS: whether the gateway has GPS capabilities (0 or 1, defaults to 0)
-#  LTE: whether the gateway has LTE capabilities, if yes it will try to use the GPS in the gateway via I2C (0 or 1, defaults to 0)
-#  GW_RESET_GPIO: defaults to 17
-#  GW_POWER_EN_GPIO: defaults to 0
+#  HAS_GPS: whether the gateway has GPS capabilities (0 or 1, defaults to 0)
+#  HAS_LTE: whether the gateway has LTE capabilities, if yes it will try to use the GPS in the gateway via I2C (0 or 1, defaults to 0)
+#  RESET_GPIO: defaults to 17
+#  POWER_EN_GPIO: defaults to 0
 # Private variables
-#  MODULE: this is the RAKwireless module usedin the gateway
+#  MODULE: this is the RAKwireless module used in the gateway
 #  FOLDER: this is the folder with the binaries
 #  GLOBAL_CONF: this is the global_conf folder to use
 
@@ -60,11 +60,11 @@ HAS_LTE=${HAS_LTE:-0}
 
 # Map hardware pins to GPIO on Raspberry Pi
 declare -a GPIO_MAP=( -1 -1 -1 2 -1 3 -1 4 14 -1 15 17 18 27 -1 22 23 -1 24 10 -1 9 25 11 8 -1 7 0 1 5 -1 6 12 13 -1 19 16 26 20 -1 21 )
-GW_RESET_PIN=${GW_RESET_PIN:-11}
-GW_RESET_GPIO=${GW_RESET_GPIO:-${GPIO_MAP[$GW_RESET_PIN]}}
+RESET_PIN=${RESET_PIN:-11}
+RESET_GPIO=${RESET_GPIO:-${GPIO_MAP[$RESET_PIN]}}
 
 # Some board might have an enable GPIO
-GW_POWER_EN_GPIO=${GW_POWER_EN_GPIO:-0}
+POWER_EN_GPIO=${POWER_EN_GPIO:-0}
 
 # Get the Gateway EUI
 if [[ -z $GATEWAY_EUI ]]; then
@@ -104,18 +104,39 @@ if [[ ! -z ${GPS_LATITUDE} ]]; then
     FAKE_GPS="true"
 fi
 
+# Get radio device
+if [[ "$CONCENTRATOR" == "SX1301" ]] || [[ "$CONCENTRATOR" == "SX1308" ]]; then
+    unset RADIO_DEV
+fi
+if [[ "$INTERFACE" == "SPI" ]]; then
+    RADIO_DEV=${RADIO_DEV:-"/dev/spidev0.0"}
+else
+    RADIO_DEV=${RADIO_DEV:-"/dev/ttyACM0"}
+fi
+
+# Get GPS device
+if [[ $HAS_LTE -eq 1 ]]; then
+    GPS_DEV=${GPS_DEV:-"/dev/i2c-1"}
+else
+    GPS_DEV=${GPS_DEV:-"/dev/ttyAMA0"}
+fi
+
 # Debug
 echo "------------------------------------------------------------------"
 echo "Model:         $MODEL"
 echo "Module:        $MODULE"
 echo "Concentrator:  $CONCENTRATOR"
 echo "Interface:     $INTERFACE"
+echo "Radio Device:  $RADIO_DEV"
 echo "Has GPS:       $HAS_GPS"
+if [[ $HAS_GPS -eq 1 ]]; then
+echo "GPS Device:    $GPS_DEV"
+fi
 echo "Has LTE:       $HAS_LTE"
+echo "Reset GPIO:    $RESET_GPIO"
+echo "Enable GPIO:   $POWER_EN_GPIO"
 echo "Main NIC:      $GATEWAY_EUI_NIC"
 echo "Gateway EUI:   $GATEWAY_EUI"
-echo "Reset GPIO:    $GW_RESET_GPIO"
-echo "Enable GPIO:   $GW_POWER_EN_GPIO"
 echo "Server:        $SERVER_HOST:$SERVER_PORT"
 echo "Band:          $BAND"
 echo "Use fake GPS:  $FAKE_GPS"
@@ -124,7 +145,5 @@ echo "Latitude:      $GPS_LATITUDE"
 echo "Longitude:     $GPS_LONGITUDE"
 echo "Altitude:      $GPS_ALTITUDE"
 fi 
-echo "Contact email: $EMAIL"
-echo "Description:   $DESCRIPTION"
 echo "------------------------------------------------------------------"
 
