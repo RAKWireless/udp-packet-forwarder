@@ -135,9 +135,7 @@ ldconfig
 udevadm control --reload-rules && udevadm trigger
 
 # Reset the concentrator
-if [[ "$INTERFACE" == "SPI" ]]; then
-    ./reset.sh
-fi
+RESET_GPIO=$RESET_GPIO POWER_EN_GPIO=$POWER_EN_GPIO POWER_EN_LOGIC=$POWER_EN_LOGIC ./reset.sh
 
 # Start packet forwarder
 cd $INSTALL_DIR/packet_forwarder/lora_pkt_fwd
