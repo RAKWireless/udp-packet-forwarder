@@ -21,7 +21,7 @@ The UDP Packet Forwarder service can run on:
 
 * AMD64: most PCs out there
 * ARMv8: Raspberry Pi 3/4, 400, Compute Module 3/4, Zero 2 W,...
-* ARVv7: Raspberry Pi 2
+* ARMv7: Raspberry Pi 2
 * ARMv6: Raspberry Pi Zero, Zero W
 
 
