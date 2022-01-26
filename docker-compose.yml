@@ -1,10 +1,16 @@
-version: '3.7'
+version: '2'
 
 services:
 
   udp-packet-forwarder:
-    
+    # use pre-defined image
     image: rakwireless/udp-packet-forwarder:latest
+    # or comment out image: and build it yourself / with balena services
+    #build:
+    #  context: .
+    #  args:
+    #    ARCH: rpi
+
     container_name: udp-packet-forwarder
     restart: unless-stopped
     privileged: true

@@ -13,7 +13,8 @@ RUN install_packages libftdi-dev libusb-dev
 WORKDIR /app
 
 # Checkout and compile remote code
-COPY builder/* .
+COPY builder/* ./
+RUN chmod +x build.sh
 RUN ARCH=${ARCH} ./build.sh
 
 # Runner image
@@ -53,6 +54,7 @@ COPY --from=builder /usr/local/lib/libmpsse.so /usr/local/lib/libmpsse.so
 COPY --from=builder /usr/local/lib/libmpsse.a /usr/local/lib/libmpsse.a
 COPY --from=builder /usr/local/include/mpsse.h /usr/local/include/mpsse.h
 COPY runner/* ./
+RUN chmod +x *sh
 
 # Launch our binary on container startup.
 CMD ["bash", "start.sh"]
