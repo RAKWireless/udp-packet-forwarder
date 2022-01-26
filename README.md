@@ -12,6 +12,11 @@ This project is based on rak_common_for_gateway project (https://github.com/RAKW
 This project has been tested with The Things Stack Community Edition (TTSCE or TTNv3).
 
 
+## Deploy with balena
+
+[![balena deploy button](https://www.balena.io/deploy.svg)](https://dashboard.balena-cloud.com/deploy?repoUrl=https://github.com/nmaas87/udp-packet-forwarder/)
+
+
 ## Requirements
 
 

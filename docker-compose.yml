@@ -4,12 +4,12 @@ services:
 
   udp-packet-forwarder:
     # use pre-defined image
-    image: rakwireless/udp-packet-forwarder:latest
+    #image: rakwireless/udp-packet-forwarder:latest
     # or comment out image: and build it yourself / with balena services
-    #build:
-    #  context: .
-    #  args:
-    #    ARCH: rpi
+    build:
+      context: .
+      args:
+        ARCH: rpi
 
     container_name: udp-packet-forwarder
     restart: unless-stopped
@@ -19,13 +19,13 @@ services:
     #volumes:
     #  - ./global_conf.json:/app/global_conf.json:ro
     
-    environment:
+    #environment:
       
       # To select your concentrator you have 3 options:
       # Option 1: set the MODEL to the WisGate Developer Gateway model number
       # Option 2: set the MODEL to the WisLink LPWAN model number
       # Option 3: set the CONCENTRATOR directly
-      MODEL: "RAK7248"
+      #MODEL: "RAK7248"
       #MODEL: "RAK5416"
       #CONCENTRATOR: "SX1302"
 
