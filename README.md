@@ -7,7 +7,7 @@ This project deploys a LoRaWAN gateway with UDP Packet Forwarder protocol using 
 
 Deploy a LoRaWAN gateway running the UDP Packet Forwarder protocol in a docker container in your computer, Raspberry Pi or compatible SBC.
 
-This project is based on rak-common-for-gateway project (https://github.com/RAKWireless/rak-common-for-gateway).
+This project is based on rak_common_for_gateway project (https://github.com/RAKWireless/rak_common_for_gateway).
 
 This project has been tested with The Things Stack Community Edition (TTSCE or TTNv3).
 
@@ -159,7 +159,7 @@ Notes:
 
 ### Get the EUI of the LoRa Gateway
 
-The LoRa gateways are manufactured with a unique 64 bits (8 bytes) identifier, called EUI, which can be used to register the gateway on the LoRaWAN Network Server. You can check the gateway EUI (and other data) by inspecting the service logs or running the command below while the container is up:
+LoRa gateways are manufactured with a unique 64 bits (8 bytes) identifier, called EUI, which can be used to register the gateway on the LoRaWAN Network Server. You can check the gateway EUI (and other data) by inspecting the service logs or running the command below while the container is up:
 
 ```
 docker exec -it udp-packet-forwarder ./info.sh
