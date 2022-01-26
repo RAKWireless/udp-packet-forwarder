@@ -54,7 +54,5 @@ COPY --from=builder /usr/local/lib/libmpsse.a /usr/local/lib/libmpsse.a
 COPY --from=builder /usr/local/include/mpsse.h /usr/local/include/mpsse.h
 COPY runner/* ./
 
-# Setup libraries
-
 # Launch our binary on container startup.
 CMD ["bash", "start.sh"]
