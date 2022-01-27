@@ -2,15 +2,46 @@
 
 # Uses docker buildx and https://github.com/estesp/manifest-tool
 
+ACTION=$@
+MANIFEST_TOOL=manifest-tool
+
 export TAG=$(git rev-parse --short HEAD)
 export VERSION=$(git describe --abbrev=0 --tags)
 export MAJOR=$(git describe --abbrev=0 --tags | cut -d '.' -f1)
 export REGISTRY=${REGISTRY:-"rakwireless/udp-packet-forwarder"}
 export BUILD_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 
-ACTION=$@
+# Check we have buildx extension for docker
+docker buildx version &> /dev/null
+if [[ $? -ne 0 ]]; then
+  echo "ERROR: docker or docker buildx extension are not installed"
+  exit 1
+fi
+
+if [ "$ACTION" == "--push" ]; then
+
+  # Check we have the manifest modifier tool
+  hash $MANIFEST_TOOL &> /dev/null
+  if [[ $? -ne 0 ]]; then
+    echo "ERROR: $MANIFEST_TOOL could not be found!"
+    exit 1
+  fi
+
+  # Ask confirmation if pushing to a registry
+  echo "Pushing image into $REGISTRY"
+  echo "Tags: $MAJOR, $VERSION, $TAG, latest"
+  read -r -p "Are you sure? [y/N] " response
+  if [[ ! "$response" =~ ^([yY][eE][sS]|[yY])$ ]]; then
+    echo "Cancelled"
+    exit 1
+  fi
+
+fi
+
+# Building
 time docker buildx bake $ACTION
 
+# Merge individual archs into the same tags
 if [ "$ACTION" == "--push" ]; then
 
     MANIFEST=manifest.yaml
@@ -32,7 +63,7 @@ manifests:
       os: linux  
 EOL
 
-    manifest-tool push from-spec $MANIFEST
+    $MANIFEST_TOOL push from-spec $MANIFEST
     rm $MANIFEST
 
 fi
