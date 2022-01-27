@@ -101,6 +101,9 @@ if [[ -d ./$FOLDER/lora_gateway ]]; then
 fi
 cp -rf ./$FOLDER/packet_forwarder $INSTALL_DIR/
 
+# We are resetting the concentrator from outside the lora_pkt_fwd
+echo "exit 0" > $INSTALL_DIR/packet_forwarder/lora_pkt_fwd/reset_lgw.sh
+
 # Global configuration file
 GLOBAL_CONFIG_FILE=$INSTALL_DIR/packet_forwarder/lora_pkt_fwd/global_conf.json
 if [[ -f ./global_conf.json ]]; then
