@@ -7,7 +7,7 @@ group "default" {
 }
 
 target "arm" {
-    tags = ["${REGISTRY}:arm"]
+    tags = ["${REGISTRY}:arm-latest"]
     args = {
         "ARCH" = "rpi",
         "TAG" = "${TAG}",
@@ -17,7 +17,7 @@ target "arm" {
 }
 
 target "aarch64" {
-    tags = ["${REGISTRY}:aarch64"]
+    tags = ["${REGISTRY}:aarch64-latest"]
     args = {
         "ARCH" = "aarch64",
         "TAG" = "${TAG}",
@@ -27,7 +27,7 @@ target "aarch64" {
 }
 
 target "amd64" {
-    tags = ["${REGISTRY}:amd64"]
+    tags = ["${REGISTRY}:amd64-latest"]
     args = {
         "ARCH" = "amd64",
         "TAG" = "${TAG}",

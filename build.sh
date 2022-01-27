@@ -49,15 +49,15 @@ if [ "$ACTION" == "--push" ]; then
 image: $REGISTRY:$TAG
 tags: ['$VERSION', '$MAJOR', 'latest']
 manifests:
-  - image: $REGISTRY:aarch64
+  - image: $REGISTRY:aarch64-latest
     platform:
       architecture: arm64
       os: linux  
-  - image: $REGISTRY:arm
+  - image: $REGISTRY:arm-latest
     platform:
       architecture: arm
       os: linux  
-  - image: $REGISTRY:amd64
+  - image: $REGISTRY:amd64-latest
     platform:
       architecture: amd64
       os: linux  
