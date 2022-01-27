@@ -26,7 +26,7 @@ services:
       # Option 2: set the MODEL to the WisLink LPWAN model number
       # Option 3: set the CONCENTRATOR directly
       MODEL: "RAK7248"
-      #MODEL: "RAK5416"
+      #MODEL: "RAK5146"
       #CONCENTRATOR: "SX1302"
 
       # When using options 2 or 3 above, you will probably have to specify other features of the module.
@@ -35,6 +35,8 @@ services:
       #HAS_GPS: "1"
       #HAS_LTE: "0"
       #RESET_GPIO: 17
+      #POWER_EN_GPIO: 0
+      #POWER_EN_LOGIC: 0
 
       # If you have the concentrator connected to a different port
       # than the default ones ("/dev/spidev0.0" for SPI or "/dev/ttyACM0" for USB) 
