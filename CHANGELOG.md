@@ -1,5 +1,18 @@
 # Changelog
 
+## Unreleased
+
+* Prevent double resetting concentrator on SX1302/3
+
+## 1.1.2 (2022-01-27)
+
+* Fix concentrator reset
+* Support for RAK833-USB/SPI module
+
+## 1.1.1 (2022-01-24)
+
+* Advanced configuration mode mounting custom `global_conf.json` file
+ 
 ## 1.1.0 (2022-01-24)
 
 * Added RADIO_DEV and GPS_DEV so the user can specify non-default ports, this allows to have more than one concentrator on the same device
