@@ -3,6 +3,7 @@ version: '2'
 services:
 
   udp-packet-forwarder:
+    
     # use pre-defined image
     image: rakwireless/udp-packet-forwarder:latest
     # or comment out image: and build it yourself / with balena services
@@ -14,7 +15,8 @@ services:
     container_name: udp-packet-forwarder
     restart: unless-stopped
     privileged: true
-    network_mode: host
+    network_mode: host      # required to read main interface MAC instead of virtual one, 
+                            # you don't need this if you set the GATEWAY_EUI manually
     
     #volumes:
     #  - ./global_conf.json:/app/global_conf.json:ro

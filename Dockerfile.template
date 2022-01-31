@@ -1,10 +1,5 @@
-ARG ARCH
-ARG TAG
-ARG BUILD_DATE
-
 # Builder image
-FROM balenalib/${ARCH}-debian:buster-build as builder
-ARG ARCH
+FROM balenalib/%%BALENA_ARCH%%-debian:buster-build as builder
 
 # Install required development packages
 RUN install_packages libftdi-dev libusb-dev
@@ -15,25 +10,19 @@ WORKDIR /app
 # Checkout and compile remote code
 COPY builder/* ./
 RUN chmod +x *.sh
-RUN ARCH=${ARCH} ./build.sh
+RUN ARCH=%%BALENA_ARCH%% ./build.sh
 
 # Runner image
-FROM balenalib/${ARCH}-debian:buster-run as runner
-ARG ARCH
-ARG TAG
-ARG BUILD_DATE
+FROM balenalib/%%BALENA_ARCH%%-debian:buster-run as runner
 
 # Image metadata
 LABEL maintainer="RAKwireless"
 LABEL authors="RAKwireless"
 LABEL org.label-schema.schema-version="1.0"
-LABEL org.label-schema.build-date=${BUILD_DATE}
 LABEL org.label-schema.name="UDP Packet Forwarder"
 LABEL org.label-schema.description="LoRaWAN UDP Packet Forwarder based on rak_common_for_gateway"
 LABEL org.label-schema.vcs-type="Git"
 LABEL org.label-schema.vcs-url="https://github.com/RAKWireless/udp-packet-forwarder"
-LABEL org.label-schema.vcs-ref=${TAG}
-LABEL org.label-schema.arch=${ARCH}
 LABEL org.label-schema.license="BSD License 2.0"
 
 # Install required runtime packages
