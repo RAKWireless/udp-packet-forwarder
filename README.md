@@ -1,13 +1,21 @@
 # LoRaWAN UDP Packet Forwarder Protocol for Docker
 
-This project deploys a LoRaWAN gateway with UDP Packet Forwarder protocol using Docker. It runs on a Raspberry Pi 3/4, Compute Module 3/4 or balenaFin with SX1301, SX1302, SX1303 or SX1308 LoRa concentrators.
+This project deploys a LoRaWAN gateway with UDP Packet Forwarder protocol using Docker. It runs on any amd64/x86_64 PC, or a SBC like a Raspberry Pi 3/4, Compute Module 3/4 or balenaFin using SX1301, SX1302, SX1303 or SX1308 LoRa concentrators.
 
 
 ## Introduction
 
 Deploy a LoRaWAN gateway running the UDP Packet Forwarder protocol in a docker container in your computer, Raspberry Pi or compatible SBC.
 
-This project is based on rak_common_for_gateway project (https://github.com/RAKWireless/rak_common_for_gateway).
+Main features:
+
+* Support for AMD64 (x86_64), ARMv8, ARMv7 and ARMv6 architectures.
+* Support for SX1301, SX1302, SX1303 and SX1308 concentrators.
+* Support for SPI and USB concentrators.
+* Compatible with The Things Stack (Comunity Edition / TTNv3) or Chirpstack LNS amongst others.
+* Almost one click deploy and at the same time highly configurable.
+
+Based on rak_common_for_gateway project (https://github.com/RAKWireless/rak_common_for_gateway).
 
 This project has been tested with The Things Stack Community Edition (TTSCE or TTNv3).
 
@@ -17,13 +25,14 @@ This project has been tested with The Things Stack Community Edition (TTSCE or T
 
 ### Hardware
 
-The UDP Packet Forwarder service can run on:
+As long as the host can run docker containers, the UDP Packet Forwarder service can run on:
 
 * AMD64: most PCs out there
 * ARMv8: Raspberry Pi 3/4, 400, Compute Module 3/4, Zero 2 W,...
 * ARMv7: Raspberry Pi 2
 * ARMv6: Raspberry Pi Zero, Zero W
 
+> **NOTE**: you will need an OS in the host machine, for some SBC like a Raspberry Pi that means and SD card with an OS (like Rasperry Pi OS) flashed on it.
 
 #### LoRa Concentrators
 
@@ -51,7 +60,7 @@ Supported RAK LoRa concentrators:
 
 > **NOTE**: This project focuses on RAKwireless products but products from other manufacturers should also work. You will have to provide the some information to configure them properly, like concentrator type, interface type, reset GPIO,...
 
-> **NOTE**: SPI concentrators in MiniPCIe form factor will require a special Hat or adapter to connect them to the SPI interface in the SBC. USB concentrators in MiniPCIe form factor will require a USB adapter to connect them to a USB2/3 socket on the SBC.
+> **NOTE**: SPI concentrators in MiniPCIe form factor will require a special Hat or adapter to connect them to the SPI interface in the SBC. USB concentrators in MiniPCIe form factor will require a USB adapter to connect them to a USB2/3 socket on the SBC. Other form factors might also require an adaptor for the target host.
 
 
 ### Software
@@ -61,7 +70,7 @@ You will need docker and docker-compose (optional but recommended) on the machin
 
 ## Installing docker & docker-compose on the OS
 
-If you don't have docker running on the machine you will need to install docker on the OS first. This is pretty staring forward, just follow these instructions:
+If you don't have docker running on the machine you will need to install docker on the OS first. This is pretty straight forward, just follow these instructions:
 
 ```
 sudo apt-get update && sudo apt-get upgrade -y
@@ -88,7 +97,7 @@ docker-compose --version
 You can use the `docker-compose.yml` file below to configure and run your instance of UDP Packet Forwarder:
 
 ```
-version: '3.7'
+version: '2.0'
 
 services:
 
