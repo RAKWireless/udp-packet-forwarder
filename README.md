@@ -21,34 +21,6 @@ This project is available on Docker Hub (https://hub.docker.com/r/rakwireless/ud
 
 This project has been tested with The Things Stack Community Edition (TTSCE or TTNv3).
 
-## Deploy with balena
-
-[![balena deploy button](https://www.balena.io/deploy.svg)](https://dashboard.balena-cloud.com/deploy?repoUrl=https://github.com/RAKWireless/udp-packet-forwarder/)
-
-You need to set the variables upon deployment according to your installed concentrator / gateway. Example for a RAK 5146 USB installed on a RAK 2287 Pi Hat on a RPi 3:
-
-````
-CONCENTRATOR: "SX1303"
-INTERFACE: "USB"
-HAS_GPS: "1"
-HAS_LTE: "0"
-RESET_GPIO: 0
-RADIO_DEV: "/dev/ttyACM0"
-GPS_DEV: "/dev/ttyAMA0"
-GATEWAY_EUI: "<YourGatewayEUI>"
-TTN_REGION: "eu1"
-BAND: "eu_863_870"
-# leave the remaining variables as default
-````
-
-You can also set other variables like
-````
-GPS_LATITUDE
-GPS_LONGITUDE
-GPS_ALTITUDE
-````
-for fake GPS (in case HAS_GPS is 0 - please do not include these variables if your unit has a GPS, otherwise it will not use it).
-For more details, read the rest of the README and the original repo at https://github.com/RAKWireless/udp-packet-forwarder - this repo only exists to add and balenafiy said project.
 
 ## Requirements
 
@@ -63,6 +35,7 @@ As long as the host can run docker containers, the UDP Packet Forwarder service 
 * ARMv6: Raspberry Pi Zero, Zero W
 
 > **NOTE**: you will need an OS in the host machine, for some SBC like a Raspberry Pi that means and SD card with an OS (like Rasperry Pi OS) flashed on it.
+
 
 #### LoRa Concentrators
 
@@ -96,6 +69,8 @@ Supported RAK LoRa concentrators:
 ### Software
 
 You will need docker and docker-compose (optional but recommended) on the machine (see below for instal·lation instructions). You will also need a an account at a LoRaWAN Network Server, for instance a [The Things Stack V3 account](https://console.cloud.thethings.network/).
+
+> You can also deploy this using balenaCloud, check the `Deploy with balena` section below.
 
 
 ## Installing docker & docker-compose on the OS
@@ -152,6 +127,31 @@ docker buildx bake --load aarch64
 ```
 
 Once built (it will take some minutes) you can bring it up by using `rakwireless/udp-packet-forwarder:aarch64` as the image name in your `docker-compose.yml` file. If you are not in an ARMv8 64 bits machine (like a Raspberry Pi 4) you can change the `aarch64` with `arm` (ARMv6 and ARMv7) or `amd64`.
+
+
+### Deploy with balena
+
+[![balena deploy button](https://www.balena.io/deploy.svg)](https://dashboard.balena-cloud.com/deploy?repoUrl=https://github.com/RAKWireless/udp-packet-forwarder/)
+
+You need to set the variables upon deployment according to your installed concentrator / gateway. Example for a RAK 5146 USB installed on a RAK 2287 Pi Hat on a RPi 3:
+
+````
+CONCENTRATOR: "SX1303"
+INTERFACE: "USB"
+HAS_GPS: "1"
+HAS_LTE: "0"
+RESET_GPIO: 0
+RADIO_DEV: "/dev/ttyACM0"
+GPS_DEV: "/dev/ttyAMA0"
+GATEWAY_EUI: "<YourGatewayEUI>"
+TTN_REGION: "eu1"
+BAND: "eu_863_870"
+# leave the remaining variables as default
+````
+
+You can also set other variables like `GPS_LATITUDE`, `GPS_LONGITUDE` and `GPS_ALTITUDE` for fake GPS (in case HAS_GPS is 0 - please do not include these variables if your unit has a GPS, otherwise it will not use it).
+
+For more details, read the `Service Variables` section below.
 
 ## Configure the Gateway
 
