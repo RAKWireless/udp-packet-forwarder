@@ -17,6 +17,8 @@ Main features:
 
 Based on rak_common_for_gateway project (https://github.com/RAKWireless/rak_common_for_gateway).
 
+This project is available on Docker Hub (https://hub.docker.com/r/rakwireless/udp-packet-forwarder) and GitHub (https://github.com/RAKWireless/udp-packet-forwarder).
+
 This project has been tested with The Things Stack Community Edition (TTSCE or TTNv3).
 
 
