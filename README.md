@@ -201,7 +201,7 @@ Notes:
 LoRa gateways are manufactured with a unique 64 bits (8 bytes) identifier, called EUI, which can be used to register the gateway on the LoRaWAN Network Server. You can check the gateway EUI (and other data) by inspecting the service logs or running the command below while the container is up:
 
 ```
-docker exec -it udp-packet-forwarder ./info.sh
+docker exec -it udp-packet-forwarder ./get_eui.sh
 ```
 
 ### Use a custom radio configuration
@@ -232,6 +232,38 @@ services:
 ```
 
 Please note that a `local_conf.json` file will still be generated and will overwrite some of the settings in the `global_conf.json`, but only in the `gateway_conf` section.
+
+
+### Running with less privileges
+
+You might have seen that on the examples above we are running docker in privileged mode and using host network. This is the simplest, more straight-forward way, but there are ways to run it without these. Let's see how.
+
+On one side, the host network is required to access the MAC of the host interface instead of that of the virtual interface. This MAC is used to create the Gateway EUI. The virtual MAC changes everytime the container is created, so we need to access the physical interface because that one does not change. But if you set the Gateway EUI manually, using the `GATEWAY_EUI` variable, then this is not needed anymore.
+
+On the other side privileged mode is required to access the port where the concentrator is listening to (either SPI or USB) and the GPIOs to reset the concentrator for SPI modules. You can get rid of these too by mounting the right device in the container and also the `/sys` root so the container can reset the concentrator.
+
+Therefore, an example of this workaround for an SPI concentrator would be:
+
+```
+version: '2.0'
+
+services:
+
+  udp-packet-forwarder:
+    image: rakwireless/udp-packet-forwarder:latest
+    container_name: udp-packet-forwarder
+    restart: unless-stopped
+    devices:
+      - /dev/spidev0.0
+    volumes:
+      - /sys:/sys
+    environment:
+      MODEL: "RAK5146"
+      GATEWAY_EUI: "E45F01FFFE517BA8"
+```
+
+For a USB concentrator you would mount the USB port instead of the SPI port and you won't need to mount the `/sys` volume, but remember to set `RESET_GPIO` to 0 to avoid unwanted errors in the logs.
+
 
 ### Register your gateway to The Things Stack
 
