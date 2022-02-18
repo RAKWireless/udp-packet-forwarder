@@ -117,14 +117,22 @@ if [[ ! -z ${GPS_LATITUDE} ]]; then
     FAKE_GPS="true"
 fi
 
-# Default radio device (custom one has no effect for SX1301 and SX1308 concentrators)
-if [[ "$CONCENTRATOR" == "SX1301" ]] || [[ "$CONCENTRATOR" == "SX1308" ]]; then
-    unset RADIO_DEV
-fi
-if [[ "$INTERFACE" == "SPI" ]]; then
+# Radio device
+if [[ "${INTERFACE}" == "SPI" ]]; then
+
     RADIO_DEV=${RADIO_DEV:-"/dev/spidev0.0"}
+    export LORAGW_SPI=$RADIO_DEV
+
+    # Set default SPI speed for SX1301/8 concentrators to 2MHz
+    if [[ "${CONCENTRATOR}" == "SX1301" ]] || [[ "${CONCENTRATOR}" == "SX1308" ]]; then
+        SPI_SPEED=${SPI_SPEED:-2000000}
+    fi
+    export LORAGW_SPI_SPEED=${SPI_SPEED:-8000000}
+
 else
+
     RADIO_DEV=${RADIO_DEV:-"/dev/ttyACM0"}
+
 fi
 
 # Default GPS device based on LTE presence
@@ -141,11 +149,10 @@ echo "Model:         $MODEL"
 echo "Module:        $MODULE"
 echo "Concentrator:  $CONCENTRATOR"
 echo "Interface:     $INTERFACE"
-
-if [[ "$CONCENTRATOR" == "SX1302" ]] || [[ "$CONCENTRATOR" == "SX1303" ]]; then
 echo "Radio Device:  $RADIO_DEV"
+if [[ "$INTERFACE" == "SPI" ]]; then
+echo "SPI Speed:     $LORAGW_SPI_SPEED"
 fi
-
 echo "Has GPS:       $HAS_GPS"
 if [[ $HAS_GPS -eq 1 ]]; then
 echo "GPS Device:    $GPS_DEV"

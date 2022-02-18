@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+* Option to set a different device port and speed for SX1301/8 SPI concentrators
 * Prevent double resetting concentrator on SX1302/3
 
 ## 1.1.2 (2022-01-27)

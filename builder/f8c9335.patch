@@ -1,3 +1,16 @@
+diff --git a/lora/rak2246/install.sh b/lora/rak2246/install.sh
+index bb896d6..695f9a4 100755
+--- a/lora/rak2246/install.sh
++++ b/lora/rak2246/install.sh
+@@ -32,7 +32,7 @@ pushd lora_gateway
+ 
+ cp $SCRIPT_DIR/library.cfg ./libloragw/library.cfg
+ cp $SCRIPT_DIR/loragw_spi.native.c ./libloragw/src/loragw_spi.native.c
+-cp $SCRIPT_DIR/../print_lora_log.sh util_pkt_logger/
++#cp $SCRIPT_DIR/../print_lora_log.sh util_pkt_logger/
+ make
+ 
+ popd
 diff --git a/lora/rak2246/lora_pkt_fwd.c b/lora/rak2246/lora_pkt_fwd.c
 index 1cdf15b..38e478f 100644
 --- a/lora/rak2246/lora_pkt_fwd.c
@@ -12,6 +25,35 @@ index 1cdf15b..38e478f 100644
  	    }
              continue;
          }
+diff --git a/lora/rak2246/loragw_spi.native.c b/lora/rak2246/loragw_spi.native.c
+index a4f4b01..2a1d78f 100644
+--- a/lora/rak2246/loragw_spi.native.c
++++ b/lora/rak2246/loragw_spi.native.c
+@@ -53,9 +53,8 @@ Maintainer: Sylvain Miermont
+ 
+ #define READ_ACCESS     0x00
+ #define WRITE_ACCESS    0x80
+-#define SPI_SPEED       2000000
+-#define SPI_DEV_PATH    "/dev/spidev0.0"
+-//#define SPI_DEV_PATH    "/dev/spidev32766.0"
++#define SPI_SPEED       (getenv("LORAGW_SPI_SPEED")==NULL ? 2000000 : atoi(getenv("LORAGW_SPI_SPEED")))
++#define SPI_DEV_PATH    (getenv("LORAGW_SPI")==NULL ? "/dev/spidev0.0" : getenv("LORAGW_SPI"))
+ 
+ /* -------------------------------------------------------------------------- */
+ /* --- PUBLIC FUNCTIONS DEFINITION ------------------------------------------ */
+diff --git a/lora/rak2247_spi/install.sh b/lora/rak2247_spi/install.sh
+index 8e321db..2acd9ec 100755
+--- a/lora/rak2247_spi/install.sh
++++ b/lora/rak2247_spi/install.sh
+@@ -31,7 +31,7 @@ fi
+ pushd lora_gateway
+ 
+ cp $SCRIPT_DIR/library.cfg ./libloragw/library.cfg
+-#cp $SCRIPT_DIR/loragw_spi.native.c ./libloragw/src/loragw_spi.native.c
++cp $SCRIPT_DIR/../rak2246/loragw_spi.native.c ./libloragw/src/loragw_spi.native.c
+ make
+ 
+ popd
 diff --git a/lora/rak2247_spi/lora_pkt_fwd.c b/lora/rak2247_spi/lora_pkt_fwd.c
 index 1cdf15b..38e478f 100644
 --- a/lora/rak2247_spi/lora_pkt_fwd.c
@@ -73,6 +115,22 @@ index ebc8956..c2fb2a4 100644
  	    }
              continue;
          }
+diff --git a/lora/rak7243/loragw_spi.native.c b/lora/rak7243/loragw_spi.native.c
+index a4f4b01..2a1d78f 100644
+--- a/lora/rak7243/loragw_spi.native.c
++++ b/lora/rak7243/loragw_spi.native.c
+@@ -53,9 +53,8 @@ Maintainer: Sylvain Miermont
+ 
+ #define READ_ACCESS     0x00
+ #define WRITE_ACCESS    0x80
+-#define SPI_SPEED       2000000
+-#define SPI_DEV_PATH    "/dev/spidev0.0"
+-//#define SPI_DEV_PATH    "/dev/spidev32766.0"
++#define SPI_SPEED       (getenv("LORAGW_SPI_SPEED")==NULL ? 2000000 : atoi(getenv("LORAGW_SPI_SPEED")))
++#define SPI_DEV_PATH    (getenv("LORAGW_SPI")==NULL ? "/dev/spidev0.0" : getenv("LORAGW_SPI"))
+ 
+ /* -------------------------------------------------------------------------- */
+ /* --- PUBLIC FUNCTIONS DEFINITION ------------------------------------------ */
 diff --git a/lora/rak7243/test_loragw_gps_i2c.c b/lora/rak7243/test_loragw_gps_i2c.c
 index d652343..5edff3b 100644
 --- a/lora/rak7243/test_loragw_gps_i2c.c
