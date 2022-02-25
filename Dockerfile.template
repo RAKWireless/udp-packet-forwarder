@@ -26,7 +26,7 @@ LABEL org.label-schema.vcs-url="https://github.com/RAKWireless/udp-packet-forwar
 LABEL org.label-schema.license="BSD License 2.0"
 
 # Install required runtime packages
-RUN install_packages jq vim libftdi1
+RUN install_packages jq vim libftdi1 gpiod
 
 # Switch to working directory for our app
 WORKDIR /app
