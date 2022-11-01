@@ -37,7 +37,7 @@ LABEL org.label-schema.arch=${ARCH}
 LABEL org.label-schema.license="BSD License 2.0"
 
 # Install required runtime packages
-RUN install_packages jq vim libftdi1 gpiod
+RUN install_packages jq vim libftdi1
 
 # Switch to working directory for our app
 WORKDIR /app

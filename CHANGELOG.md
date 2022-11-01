@@ -1,9 +1,5 @@
 # Changelog
 
-## Unreleased
-
-* Using gpiod instead of /sys/class/gpio for concentrator reset
-
 ## 1.1.3 (2022-02-18)
 
 * Option to set a different device port and speed for SX1301/8 SPI concentrators
