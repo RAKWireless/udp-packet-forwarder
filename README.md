@@ -79,12 +79,10 @@ You will need docker and docker-compose (optional but recommended) on the machin
 If you don't have docker running on the machine you will need to install docker on the OS first. This is pretty straight forward, just follow these instructions:
 
 ```
-sudo apt-get update && sudo apt-get upgrade -y
-curl -sSL https://get.docker.com | sh
+curl -fsSL https://get.docker.com -o get-docker.sh
+sudo sh get-docker.sh
 sudo usermod -aG docker ${USER}
 newgrp docker
-sudo apt install -y python3 python3-dev python3-pip libffi-dev libssl-dev
-sudo pip3 install docker-compose
 sudo systemctl enable docker
 ```
 
