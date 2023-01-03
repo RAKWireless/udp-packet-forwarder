@@ -90,7 +90,6 @@ Once done, you should be able to check the instalation is alright by testing:
 
 ```
 docker --version
-docker-compose --version
 ```
 
 
@@ -116,6 +115,30 @@ services:
 ```
 
 Modify the environment variables to match your setup (see the `Service Variables` section below). You will need to know the Gateway EUI to register it in your LoraWAN Network Server. Check the `Get the EUI of the LoRa Gateway` section below to know how. Otherwise, check the logs messages when the service starts to know the Gateway EUI to use.
+
+Once you have it configured deploy the service via:
+
+```
+docker compose up
+```
+
+It will show you the service log as it boots and starts receiving packages. You can `Ctrl+C` to stop it. To run it in the background (once you check everything works OK) just do:
+
+```
+docker compose up -d
+```
+
+Since the `restart` property in the `docker-compose.yml` file is set to `unless-stopped` the machine will start the container every time it reboots. To stop the container just type (while in the same folder):
+
+```
+docker compose down
+```
+
+or
+
+```
+docker stop udp-packet-forwarder
+```
 
 ### Build the image (not required)
 
