@@ -163,7 +163,7 @@ INTERFACE: "USB"
 HAS_GPS: "1"
 HAS_LTE: "0"
 RESET_GPIO: 0
-RADIO_DEV: "/dev/ttyACM0"
+RADIO_DEV: "/dev/ttyUSB0"
 GPS_DEV: "/dev/ttyAMA0"
 GATEWAY_EUI: "<YourGatewayEUI>"
 TTN_REGION: "eu1"
@@ -188,7 +188,7 @@ Variable Name | Value | Description | Default
 **`INTERFACE`** | `SPI` or `USB` | Concentrator interface | If `MODEL` is defined it will get the interface type from it, otherwise defaults to `SPI`
 **`HAS_GPS`** | 0 or 1 | Set to 1 if the gateway has GPS | If `MODEL` is defined it will get this from it, otherwise defaults to 1 (with GPS)
 **`HAS_LTE`** | 0 or 1 | Set to 1 if the gateway has LTE connectivity | If `MODEL` is defined it will get this from it, otherwise defaults to 0 (without LTE)
-**`RADIO_DEV`** | `STRING` | Where the concentrator is connected to | `/dev/spidev0.0` for SPI concentrators, `/dev/ttyACM0` for USB concentrators
+**`RADIO_DEV`** | `STRING` | Where the concentrator is connected to | `/dev/spidev0.0` for SPI concentrators, `/dev/ttyUSB0` for USB concentrators
 **`SPI_SPEED`** | `INT` | Speed of the SPI interface | 2000000 (2MHz) for SX1301/8 concentrators, 8000000 (8Mhz) for the rest
 **`RESET_GPIO`** | `INT` | GPIO number that resets (Broadcom pin number) | 17
 **`POWER_EN_GPIO`** | `INT` | GPIO number that enables power (by pulling HIGH) to the concentrator (Broadcom pin number). 0 means not required | 0

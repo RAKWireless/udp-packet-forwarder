@@ -41,10 +41,10 @@ services:
       #POWER_EN_LOGIC: 0
 
       # If you have the concentrator connected to a different port
-      # than the default ones ("/dev/spidev0.0" for SPI or "/dev/ttyACM0" for USB) 
+      # than the default ones ("/dev/spidev0.0" for SPI or "/dev/ttyUSB0" for USB) 
       # you can define it this way
       #RADIO_DEV: "/dev/spidev0.1"
-      #RADIO_DEV: "/dev/ttyUSB0"
+      #RADIO_DEV: "/dev/ttyACM0"
 
       # SPI speed is automatically set depending on the concentrator,
       # but should you have any trouble you can change it like this:

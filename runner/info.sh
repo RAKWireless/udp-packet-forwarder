@@ -131,7 +131,7 @@ if [[ "${INTERFACE}" == "SPI" ]]; then
 
 else
 
-    RADIO_DEV=${RADIO_DEV:-"/dev/ttyACM0"}
+    RADIO_DEV=${RADIO_DEV:-"/dev/ttyUSB0"}
 
 fi
 

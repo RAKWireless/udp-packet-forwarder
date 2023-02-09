@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.2.0 (2023-02-09)
+
+* Changed default RADIO_DEV to /dev/ttyUSB0 when using USB interface
+
 ## 1.1.3 (2022-02-18)
 
 * Option to set a different device port and speed for SX1301/8 SPI concentrators
