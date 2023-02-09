@@ -15,8 +15,6 @@ Main features:
 * Compatible with The Things Stack (Comunity Edition / TTNv3) or Chirpstack LNS amongst others.
 * Almost one click deploy and at the same time highly configurable.
 
-Based on rak_common_for_gateway project (https://github.com/RAKWireless/rak_common_for_gateway).
-
 This project is available on Docker Hub (https://hub.docker.com/r/rakwireless/udp-packet-forwarder) and GitHub (https://github.com/RAKWireless/udp-packet-forwarder).
 
 This project has been tested with The Things Stack Community Edition (TTSCE or TTNv3).
@@ -187,7 +185,6 @@ Variable Name | Value | Description | Default
 **`CONCENTRATOR`** | `STRING` | Semtech concentrator used (`SX1301`, `SX1302`, `SX1303` or `SX1308`) | If `MODEL` is defined it will get the concentrator from it
 **`INTERFACE`** | `SPI` or `USB` | Concentrator interface | If `MODEL` is defined it will get the interface type from it, otherwise defaults to `SPI`
 **`HAS_GPS`** | 0 or 1 | Set to 1 if the gateway has GPS | If `MODEL` is defined it will get this from it, otherwise defaults to 1 (with GPS)
-**`HAS_LTE`** | 0 or 1 | Set to 1 if the gateway has LTE connectivity | If `MODEL` is defined it will get this from it, otherwise defaults to 0 (without LTE)
 **`RADIO_DEV`** | `STRING` | Where the concentrator is connected to | `/dev/spidev0.0` for SPI concentrators, `/dev/ttyUSB0` for USB concentrators
 **`SPI_SPEED`** | `INT` | Speed of the SPI interface | 2000000 (2MHz) for SX1301/8 concentrators, 8000000 (8Mhz) for the rest
 **`RESET_GPIO`** | `INT` | GPIO number that resets (Broadcom pin number) | 17

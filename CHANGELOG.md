@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+* Remove dependency with rak_common_for_gateway code
+
 ## 1.2.0 (2023-02-09)
 
 * Changed default RADIO_DEV to /dev/ttyUSB0 when using USB interface

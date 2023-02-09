@@ -1,0 +1,162 @@
+diff --git a/lora_pkt_fwd/Makefile b/lora_pkt_fwd/Makefile
+index 1330d62..6135431 100644
+--- a/lora_pkt_fwd/Makefile
++++ b/lora_pkt_fwd/Makefile
+@@ -37,8 +37,11 @@ LGW_INC += $(LGW_PATH)/inc/loragw_hal.h
+ LGW_INC += $(LGW_PATH)/inc/loragw_gps.h
+ 
+ ### Linking options
+-
++ifeq ($(CFG_SPI),native)
+ LIBS := -lloragw -lrt -lpthread -lm
++else ifeq ($(CFG_SPI),ftdi)
++  LIBS := -lloragw -lrt -lpthread -lmpsse -lm
++endif
+ 
+ ### General build targets
+ 
+diff --git a/lora_pkt_fwd/src/lora_pkt_fwd.c b/lora_pkt_fwd/src/lora_pkt_fwd.c
+index 801f28d..a33f09d 100644
+--- a/lora_pkt_fwd/src/lora_pkt_fwd.c
++++ b/lora_pkt_fwd/src/lora_pkt_fwd.c
+@@ -693,7 +693,7 @@ static int parse_gateway_configuration(const char * conf_file) {
+     /* server hostname or IP address (optional) */
+     str = json_object_get_string(conf_obj, "server_address");
+     if (str != NULL) {
+-        strncpy(serv_addr, str, sizeof serv_addr);
++        strncpy(serv_addr, str, sizeof(serv_addr) - 1);
+         MSG("INFO: server hostname or IP address is configured to \"%s\"\n", serv_addr);
+     }
+ 
+@@ -750,7 +750,7 @@ static int parse_gateway_configuration(const char * conf_file) {
+     /* GPS module TTY path (optional) */
+     str = json_object_get_string(conf_obj, "gps_tty_path");
+     if (str != NULL) {
+-        strncpy(gps_tty_path, str, sizeof gps_tty_path);
++        strncpy(gps_tty_path, str, sizeof(gps_tty_path) - 1);
+         MSG("INFO: GPS serial port path is configured to \"%s\"\n", gps_tty_path);
+     }
+ 
+@@ -2515,15 +2515,34 @@ void thread_down(void) {
+             }
+             if (jit_result == JIT_ERROR_OK) {
+                 for (i=0; i<txlut.size; i++) {
+-                    if (txlut.lut[i].rf_power == txpkt.rf_power) {
++                    if (txlut.lut[i].rf_power == txpkt.rf_power)
++                    {
+                         /* this RF power is supported, we can continue */
++                        txpkt.rf_power = txlut.lut[i].rf_power;
++                        MSG("INFO: == used txlut index:%d\n", i);
++                        break;
++                    }
++                    else if (txlut.lut[i].rf_power > txpkt.rf_power) {
++                        if (0 != i)
++                        {
++                            MSG("INFO: >= used txlut index:%d. __1\n", i - 1);
++                            MSG("WARNING: network-server wants to use powe = %d, and actually uses powd = %d\n", txpkt.rf_power, txlut.lut[i - 1].rf_power);
++                            txpkt.rf_power = txlut.lut[i - 1].rf_power;
++                        }
++                        else
++                        {
++                            MSG("INFO: >= used txlut index:%d. __2\n", i);
++                            MSG("WARNING: network-server wants to use powe = %d, and actually uses powd = %d\n", txpkt.rf_power, txlut.lut[0].rf_power);
++                            txpkt.rf_power = txlut.lut[0].rf_power;
++                        }
+                         break;
+                     }
+                 }
+                 if (i == txlut.size) {
+-                    /* this RF power is not supported */
+-                    jit_result = JIT_ERROR_TX_POWER;
+-                    MSG("ERROR: Packet REJECTED, unsupported RF power for TX - %d\n", txpkt.rf_power);
++                    /* Exceeding maximum power, use maximum power */
++                    MSG("WARNING: power for TX - %d exceeding maximum power - %d, use maximum power - %d\n", txpkt.rf_power, txlut.lut[txlut.size - 1].rf_power, txlut.lut[txlut.size - 1].rf_power);
++                    txpkt.rf_power = txlut.lut[txlut.size - 1].rf_power;
++                    MSG("INFO: >= used txlut index:%d. __3\n", txlut.size - 1);
+                 }
+             }
+ 
+@@ -2654,6 +2673,52 @@ void thread_jit(void) {
+     }
+ }
+ 
++static void modify_os_time(const uint32_t ppm_tstamp)
++{
++    struct timespec y;
++    struct timespec tv;
++    static bool time_already_set = false;
++    struct timeval stamp;
++    gettimeofday(&stamp, NULL);
++    int time_diff = 0;
++    lgw_cnt2utc(time_reference_gps, ppm_tstamp, &y);
++    if ((!gps_enabled) || time_already_set)
++    {
++        return;
++    }
++    if (y.tv_sec < 1583402711) // time less than '2020-03-05 18:00:00'
++    {
++        return;
++    }
++
++    MSG("INFO: [modify_os_time] local_time=%ld, gps_time=%ld\n", stamp.tv_sec, y.tv_sec);
++    time_diff = abs(y.tv_sec - stamp.tv_sec);
++
++    if (time_diff < 10)
++    {
++        time_already_set = true;
++        MSG("INFO: [modify_os_time] The difference between the system time(%ld) and the GPS time(%ld) is less than 10 seconds. Use the system time.\n", stamp.tv_sec, y.tv_sec);
++        return;
++    }
++
++    tv.tv_sec = y.tv_sec;
++    tv.tv_nsec = 0;
++
++    int ret = clock_settime(CLOCK_REALTIME, &tv);
++    if (0 == ret)
++    {
++        time_already_set = true;
++        time_t t;
++        struct tm* local;
++        char buf[128] = {0};
++        t = time(NULL);
++        local = localtime(&t);
++        strftime(buf, 64, "%Y-%m-%d %H:%M:%S", local);  
++        MSG("INFO: [modify_os_time] System time has been synchronized via GPS, %s\n", buf);
++    }
++}
++
++
+ /* -------------------------------------------------------------------------- */
+ /* --- THREAD 4: PARSE GPS MESSAGE AND KEEP GATEWAY IN SYNC ----------------- */
+ 
+@@ -2681,6 +2746,7 @@ static void gps_process_sync(void) {
+     /* try to update time reference with the new GPS time & timestamp */
+     pthread_mutex_lock(&mx_timeref);
+     i = lgw_gps_sync(&time_reference_gps, trig_tstamp, utc, gps_time);
++    modify_os_time(trig_tstamp);
+     pthread_mutex_unlock(&mx_timeref);
+     if (i != LGW_GPS_SUCCESS) {
+         MSG("WARNING: [gps] GPS out of sync, keeping previous time reference\n");
+@@ -2717,6 +2783,7 @@ void thread_gps(void) {
+     /* initialize some variables before loop */
+     memset(serial_buff, 0, sizeof serial_buff);
+ 
++    int invalid_nb_char_count = 0;
+     while (!exit_sig && !quit_sig) {
+         size_t rd_idx = 0;
+         size_t frame_end_idx = 0;
+@@ -2724,7 +2791,13 @@ void thread_gps(void) {
+         /* blocking non-canonical read on serial port */
+         ssize_t nb_char = read(gps_tty_fd, serial_buff + wr_idx, LGW_GPS_MIN_MSG_SIZE);
+         if (nb_char <= 0) {
+-            MSG("WARNING: [gps] read() returned value %d\n", nb_char);
++            invalid_nb_char_count++;
++            if (invalid_nb_char_count == 20000){
++                invalid_nb_char_count = 0;
++                #if DEBUG_GPS == 1
++                    MSG("WARNING: [gps] read() returned value %d\n", nb_char);
++                #endif
++            }
+             continue;
+         }
+         wr_idx += (size_t)nb_char;

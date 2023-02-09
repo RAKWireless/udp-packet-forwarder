@@ -33,4 +33,4 @@ data:
     - raspberrypi3-64
     - raspberrypi400-64
     - raspberrypicm4-ioboard
-version: 1.2.0
+version: 2.0.0

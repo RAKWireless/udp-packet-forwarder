@@ -49,74 +49,44 @@ fi
 # Push variables to Balena
 push_variables
 
-# Now we can get the FOLDER and GLOBAL_CONF variables
+# Now we can get the DESIGN variable
 if [[ "$CONCENTRATOR" == "SX1301" ]]; then
-    if [[ $HAS_GPS -eq 1 ]]; then
-        FOLDER="rak7243"
-        if [[ $HAS_LTE -eq 1 ]]; then
-            GLOBAL_CONF="global_conf_i2c"
-        else
-            GLOBAL_CONF="global_conf_uart"
-        fi
-    else
-        if [[ "$INTERFACE" == "SPI" ]]; then
-            FOLDER="rak2247_spi"
-        else
-            FOLDER="rak2247_usb"
-        fi
-        GLOBAL_CONF="global_conf"
-    fi
-elif [[ "$CONCENTRATOR" == "SX1302" ]]; then
-    FOLDER="rak2287"
     if [[ "$INTERFACE" == "SPI" ]]; then
-        if [[ $HAS_LTE -eq 1 ]]; then
-            GLOBAL_CONF="global_conf_i2c"
-        else
-            GLOBAL_CONF="global_conf_uart"
-        fi
+        DESIGN="v2/native"
     else
-        GLOBAL_CONF="global_conf_usb"
+        DESIGN="v2/ftdi"
     fi
-elif [[ "$CONCENTRATOR" == "SX1303" ]]; then
-    FOLDER="rak5146"
-    if [[ "$INTERFACE" == "SPI" ]]; then
-        if [[ $HAS_LTE -eq 1 ]]; then
-            GLOBAL_CONF="global_conf_i2c"
-        else
-            GLOBAL_CONF="global_conf_uart"
-        fi
-    else
-        GLOBAL_CONF="global_conf_usb"
-    fi
+elif [[ "$CONCENTRATOR" == "SX1302" ]] || [[ "$CONCENTRATOR" == "SX1303" ]]; then
+    DESIGN="corecell"
 elif [[ "$CONCENTRATOR" == "SX1308" ]]; then
-    FOLDER="rak2246"
-    GLOBAL_CONF="global_conf"
+    DESIGN="v2/native"
 fi
 
-# Copy binaries based on configuration
+# Create installation folder
 INSTALL_DIR=/opt/ttn-gateway
 mkdir -p $INSTALL_DIR
-if [[ -d ./$FOLDER/lora_gateway ]]; then
-    cp -rf ./$FOLDER/lora_gateway $INSTALL_DIR/
-fi
-cp -rf ./$FOLDER/packet_forwarder $INSTALL_DIR/
+
+# Copy binaries based on configuration
+cp -rf ./artifacts/$DESIGN/* $INSTALL_DIR/
 
 # We are resetting the concentrator from outside the lora_pkt_fwd
-echo "exit 0" > $INSTALL_DIR/packet_forwarder/lora_pkt_fwd/reset_lgw.sh
+echo "exit 0" > $INSTALL_DIR/reset_lgw.sh
 
 # Global configuration file
-GLOBAL_CONFIG_FILE=$INSTALL_DIR/packet_forwarder/lora_pkt_fwd/global_conf.json
+GLOBAL_CONFIG_FILE=$INSTALL_DIR/global_conf.json
 if [[ -f ./global_conf.json ]]; then
     cp -f ./global_conf.json $GLOBAL_CONFIG_FILE
 else
-    cp -f ./$FOLDER/$GLOBAL_CONF/global_conf.$BAND.json $GLOBAL_CONFIG_FILE
+    cp -f ./config/${CONCENTRATOR,,}/global_conf.$BAND.json $GLOBAL_CONFIG_FILE
     if [ -n $RADIO_DEV ]; then
-        sed -i "s#\"com_path\":\s*.*,#\"com_path\": \"$RADIO_DEV\",#"  $GLOBAL_CONFIG_FILE
+        sed -i "s#\"com_type\":\s*.*,#\"com_type\": \"$INTERFACE\",#" $GLOBAL_CONFIG_FILE
+        sed -i "s#\"com_path\":\s*.*,#\"com_path\": \"$RADIO_DEV\",#" $GLOBAL_CONFIG_FILE
+        sed -i "s#\"gps_tty_path\":\s*.*,#\"gps_tty_path\": \"$GPS_DEV\",#" $GLOBAL_CONFIG_FILE
     fi
 fi
 
 # Modify local configuration file
-LOCAL_CONFIG_FILE=$INSTALL_DIR/packet_forwarder/lora_pkt_fwd/local_conf.json
+LOCAL_CONFIG_FILE=$INSTALL_DIR/local_conf.json
 cat > $LOCAL_CONFIG_FILE << EOL
 {
     "gateway_conf": {
@@ -141,7 +111,7 @@ udevadm control --reload-rules && udevadm trigger
 RESET_GPIO=$RESET_GPIO POWER_EN_GPIO=$POWER_EN_GPIO POWER_EN_LOGIC=$POWER_EN_LOGIC ./reset.sh
 
 # Start packet forwarder
-cd $INSTALL_DIR/packet_forwarder/lora_pkt_fwd
+cd $INSTALL_DIR
 ./lora_pkt_fwd
 
 
