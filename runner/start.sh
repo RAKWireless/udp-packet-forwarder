@@ -40,7 +40,9 @@ then
 fi
 
 # Check we have a valid BAND
-declare -a BANDS=( as_915_921, as_915_928, as_917_920, as_920_923, au_915_928, cn_470_510, eu_433, eu_863_870, in_865_867, kr_920_923, ru_864_870, us_902_928 )
+declare -a BANDS=( as_923_1, as_923_2, as_923_3, as_923_4, au_915_928, cn_470_510, eu_433, eu_863_870, in_865_867, kr_920_923, ru_864_870, us_902_928 )
+#declare -a BANDS=( as_915_921, as_915_928, as_917_920, as_920_923, au_915_928, cn_470_510, eu_433, eu_863_870, in_865_867, kr_920_923, ru_864_870, us_902_928 )
+
 if [[ ! " ${BANDS[*]} " =~ "${BAND}" ]]; then
     echo -e "\033[91mERROR: Wrong BAND setting ($BAND).\033[0m"
 	idle
@@ -109,6 +111,18 @@ GLOBAL_CONFIG_FILE=$INSTALL_DIR/packet_forwarder/lora_pkt_fwd/global_conf.json
 if [[ -f ./global_conf.json ]]; then
     cp -f ./global_conf.json $GLOBAL_CONFIG_FILE
 else
+    if [ "$BAND" == "as_923_1" ]; then
+        BAND="as_915_928"
+    fi
+    if [ "$BAND" == "as_923_2" ]; then
+        BAND="as_920_923"
+    fi
+    if [ "$BAND" == "as_923_3" ]; then
+        BAND="as_915_921"
+    fi
+    if [ "$BAND" == "as_923_4" ]; then
+        BAND="as_917_920"
+    fi  
     cp -f ./$FOLDER/$GLOBAL_CONF/global_conf.$BAND.json $GLOBAL_CONFIG_FILE
     if [ -n $RADIO_DEV ]; then
         sed -i "s#\"com_path\":\s*.*,#\"com_path\": \"$RADIO_DEV\",#"  $GLOBAL_CONFIG_FILE
@@ -143,5 +157,4 @@ RESET_GPIO=$RESET_GPIO POWER_EN_GPIO=$POWER_EN_GPIO POWER_EN_LOGIC=$POWER_EN_LOG
 # Start packet forwarder
 cd $INSTALL_DIR/packet_forwarder/lora_pkt_fwd
 ./lora_pkt_fwd
-
 
