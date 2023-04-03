@@ -212,7 +212,7 @@ Notes:
 
 > The service will generate a Gateway EUI based on an existing interface. It will try to find `eth0`, `wlan0` or `usb0`. If neither of these is available it will try to identify the most used existing interface. But this approach is not recommended, instead define a specific and unique custom `GATEWAY_EUI` or identify the interface you want the service to use to generate it by setting `GATEWAY_EUI_NIC`.
 
-> The `BAND` can be one of these values: `as_915_921`, `as_915_928`, `as_917_920`, `as_920_923`, `au_915_928`, `cn_470_510`, `eu_433`, `eu_863_870`, `in_865_867`, `kr_920_923`, `ru_864_870`, and `us_902_928`.
+> The `BAND` can be one of these values: `as_915_921(as_923_3)`, `as_915_928(as_915_1)`, `as_917_920(as_923_4)`, `as_920_923(as_923_2)`, `au_915_928`, `cn_470_510`, `eu_433`, `eu_863_870`, `in_865_867`, `kr_920_923`, `ru_864_870`, and `us_902_928`.
 
 > `SERVER_HOST` and `SERVER_PORT` values default to The Things Stack Community Edition european server (`udp://eu1.cloud.thethings.network:1700`). If your region is not EU you can change it using ```TTN_REGION```. At the moment only these regions are available: `eu1`, `nam1` and `au1`.
 
