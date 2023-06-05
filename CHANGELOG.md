@@ -1,8 +1,9 @@
 # Changelog
 
-## Unreleased
+## 2.0.0 (2023-06-05)
 
 * Remove dependency with rak_common_for_gateway code
+* Find concentrator utility
 
 ## 1.2.0 (2023-02-09)
 
