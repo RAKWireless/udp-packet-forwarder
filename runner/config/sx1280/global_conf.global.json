@@ -1,0 +1,49 @@
+{
+    "radio_conf": {
+        "tty_path": "/dev/ttyACM0",
+        "lorawan_public": true,
+        "antenna_gain": 0, /* antenna gain, in dBi */
+        "chan_0": {
+            "enable": true,
+            "freq": 2403000000,
+            "bandwidth": 812000,
+            "spread_factor": 12,
+            "rssi_offset": 0.0
+        },
+        "chan_1": {
+            "enable": true,
+            "freq": 2479000000,
+            "bandwidth": 812000,
+            "spread_factor": 12,
+            "rssi_offset": 0.0
+        },
+        "chan_2": {
+            "enable": true,
+            "freq": 2425000000,
+            "bandwidth": 812000,
+            "spread_factor": 12,
+            "rssi_offset": 0.0
+        },
+        "tx": {
+            "enable": true,
+            "tx_freq_min": 2400000000,
+            "tx_freq_max": 2483500000
+        }
+    },
+
+    "gateway_conf": {
+        "gateway_ID": "auto",
+        /* change with default server address/ports */
+        "server_address": "localhost",
+        "serv_port_up": 1700,
+        "serv_port_down": 1700,
+        /* adjust the following parameters for your network */
+        "keepalive_interval": 10,
+        "stat_interval": 30,
+        "push_timeout_ms": 100,
+        /* forward only valid packets */
+        "forward_crc_valid": true,
+        "forward_crc_error": false,
+        "forward_crc_disabled": false
+    }
+}
