@@ -41,25 +41,26 @@ function idle {
 
 function chip_id {
 
-    local CONCENTRATOR=$1
-    local INTERFACE=$2
-    local DEVICE=$3
+    local DESIGN=$1
+    local DEVICE=$2
+    
+    CHIP_ID_COMMAND="./artifacts/${DESIGN,,}/chip_id"
 
-    if [[ -f ./chip_id ]]; then
+    if [[ -f $CHIP_ID_COMMAND ]]; then
         
-        if [[ "$CONCENTRATOR" == "SX1280" ]]; then
-            echo $( ./chip_id -d $DEVICE | grep 'EUI' | sed 's/^.*0x//' | tr [a-z] [A-Z] )
+        if [[ "$DESIGN" == "2g4" ]]; then
+            echo $( $CHIP_ID_COMMAND -d $DEVICE | grep 'EUI' | sed 's/^.*0x//' | tr [a-z] [A-Z] )
             return
         fi
         
-        if [[ "$CONCENTRATOR" == "SX1302" ]] || [[ "$CONCENTRATOR" == "SX1303" ]]; then
-            if [[ "$INTERFACE" == "USB" ]]; then COM_TYPE="-u"; fi
-            echo $( ./chip_id $COM_TYPE -d $DEVICE | grep 'EUI' | sed 's/^.*0x//' | tr [a-z] [A-Z] )
+        if [[ "$DESIGN" == "corecell" ]]; then
+            if [[ "$DEVICE" == *"tty"* ]]; then COM_TYPE="-u"; fi
+            echo $( $CHIP_ID_COMMAND $COM_TYPE -d $DEVICE | grep 'EUI' | sed 's/^.*0x//' | tr [a-z] [A-Z] )
             return
         fi
         
-        #if [[ "$CONCENTRATOR" == "SX1308" ]]; then
-        #    echo $( ./chip_id | sed 's/^.*0x//' | tr [a-z] [A-Z] )
+        #if [[ "$DESIGN" == "picocell" ]]; then
+        #    echo $( $CHIP_ID_COMMAND | sed 's/^.*0x//' | tr [a-z] [A-Z] )
         #    return
         #fi
         
@@ -99,9 +100,12 @@ fi
 # Models with USB interface
 MODELS_WITH_USB="RAK7271 RAK7371 RAK5148 R11E-LR2 R11E-LR8 R11E-LR9 SX1280ZXXXXGW1"
 if [[ $MODELS_WITH_USB =~ (^|[[:space:]])$MODEL($|[[:space:]]) ]]; then
-    INTERFACE=${INTERFACE:-"USB"}
+    INTERFACE="${INTERFACE:-"USB"}"
+elif [[ "${CONCENTRATOR}" == "SX1301" ]] || [[ "${CONCENTRATOR}" == "SX1308" ]]; then
+    INTERFACE=${INTERFACE:-"SPI"}
+else
+    INTERFACE=${INTERFACE:-"ANY"}
 fi
-INTERFACE=${INTERFACE:-"SPI"}
 
 # -----------------------------------------------------------------------------
 # Identify concentrator design
@@ -121,7 +125,55 @@ else
 fi
 
 # -----------------------------------------------------------------------------
-# Radio device configuration
+# Radio device identification
+# -----------------------------------------------------------------------------
+
+# Auto detect
+if [[ "${RADIO_DEV:-AUTO}" == "AUTO" ]]; then
+
+    unset RADIO_DEV
+
+    if [[ "${DESIGN}" != *"v2"* ]]; then
+
+        if [[ "${INTERFACE}" == "ANY" ]]; then
+            DEVICES=$( ls /dev/spidev* /dev/ttyACM* /dev/ttyUSB* 2> /dev/null )
+        elif [[ "${INTERFACE}" == "SPI" ]]; then
+            DEVICES=$( ls /dev/spidev* 2> /dev/null )
+        else
+            DEVICES=$( ls /dev/ttyACM* /dev/ttyUSB* 2> /dev/null )
+        fi
+
+        FOUND=0
+        RADIO_NUM=${RADIO_NUM:-1}
+        for DEVICE in $DEVICES; do
+            #echo "Checking $DESIGN on $DEVICE"
+            RESPONSE=$( chip_id $DESIGN $DEVICE )
+            if [[ "${RESPONSE}" != "" ]]; then
+                FOUND=$(( $FOUND + 1 ))
+                if [[ ${FOUND} -eq $RADIO_NUM ]]; then
+                    RADIO_DEV=$DEVICE
+                    break
+                fi
+            fi
+        done
+
+        if [[ ${FOUND} -eq 0 ]]; then
+            echo -e "${COLOR_WARNING}ERROR: RADIO_DEV set to auto discover but no concentrator found! (INTERFACE set to $INTERFACE) ${COLOR_END}"
+        else
+            if [[ "${INTERFACE}" == "ANY" ]]; then
+                if [[ "${RADIO_DEV}" == *"spi"* ]]; then 
+                    INTERFACE="SPI"
+                else 
+                    INTERFACE="USB"
+                fi
+            fi
+        fi
+    
+    fi
+fi
+
+# -----------------------------------------------------------------------------
+# Radio device defaults
 # -----------------------------------------------------------------------------
 
 # Radio device
@@ -200,7 +252,7 @@ chmod +x reset_lgw.sh
 # -----------------------------------------------------------------------------
 
 # Get the CHIP ID
-CHIP_ID=$( chip_id $CONCENTRATOR $INTERFACE $RADIO_DEV )
+CHIP_ID=$( chip_id $DESIGN $RADIO_DEV )
 
 # Source to check for EUI
 GATEWAY_EUI_NIC=${GATEWAY_EUI_NIC:-"manual"} # deprecated

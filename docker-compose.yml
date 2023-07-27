@@ -35,7 +35,7 @@ services:
 
       # When using options 2 or 3 above, you will probably have to specify other features of the module.
       # These are the defaults:
-      #INTERFACE: "SPI"
+      #INTERFACE: "ANY"
       #HAS_GPS: "1"
       #HAS_LTE: "0"
       #RESET_GPIO: 17
