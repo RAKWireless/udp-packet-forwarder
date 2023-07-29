@@ -44,23 +44,23 @@ function chip_id {
     local DESIGN=$1
     local DEVICE=$2
     
-    CHIP_ID_COMMAND="./artifacts/${DESIGN,,}/chip_id"
+    CHIP_ID_COMMAND="./chip_id"
 
     if [[ -f $CHIP_ID_COMMAND ]]; then
         
         if [[ "$DESIGN" == "2g4" ]]; then
-            echo $( $CHIP_ID_COMMAND -d $DEVICE | grep 'EUI' | sed 's/^.*0x//' | tr [a-z] [A-Z] )
+            echo $( timeout ${TIMEOUT:-3}s $CHIP_ID_COMMAND -d $DEVICE | grep 'EUI' | sed 's/^.*0x//' | tr [a-z] [A-Z] )
             return
         fi
         
         if [[ "$DESIGN" == "corecell" ]]; then
             if [[ "$DEVICE" == *"tty"* ]]; then COM_TYPE="-u"; fi
-            echo $( $CHIP_ID_COMMAND $COM_TYPE -d $DEVICE | grep 'EUI' | sed 's/^.*0x//' | tr [a-z] [A-Z] )
+            echo $( timeout ${TIMEOUT:-3}s $CHIP_ID_COMMAND $COM_TYPE -d $DEVICE | grep 'EUI' | sed 's/^.*0x//' | tr [a-z] [A-Z] )
             return
         fi
         
         #if [[ "$DESIGN" == "picocell" ]]; then
-        #    echo $( $CHIP_ID_COMMAND | sed 's/^.*0x//' | tr [a-z] [A-Z] )
+        #    echo $( timeout ${TIMEOUT:-3}s $CHIP_ID_COMMAND | sed 's/^.*0x//' | tr [a-z] [A-Z] )
         #    return
         #fi
         
@@ -101,10 +101,10 @@ fi
 MODELS_WITH_USB="RAK7271 RAK7371 RAK5148 R11E-LR2 R11E-LR8 R11E-LR9 SX1280ZXXXXGW1"
 if [[ $MODELS_WITH_USB =~ (^|[[:space:]])$MODEL($|[[:space:]]) ]]; then
     INTERFACE="${INTERFACE:-"USB"}"
-elif [[ "${CONCENTRATOR}" == "SX1301" ]] || [[ "${CONCENTRATOR}" == "SX1308" ]]; then
-    INTERFACE=${INTERFACE:-"SPI"}
-else
+elif [[ "${RADIO_DEV}" == "AUTO" ]]; then
     INTERFACE=${INTERFACE:-"ANY"}
+else
+    INTERFACE=${INTERFACE:-"SPI"}
 fi
 
 # -----------------------------------------------------------------------------
@@ -124,52 +124,64 @@ else
     DESIGN=${DESIGN:-"v2/ftdi"}
 fi
 
+# Copy binaries based on configuration
+cp -rf ./artifacts/${DESIGN,,}/* ./
+
 # -----------------------------------------------------------------------------
-# Radio device identification
+# Radio device discovery
 # -----------------------------------------------------------------------------
 
-# Auto detect
-if [[ "${RADIO_DEV:-AUTO}" == "AUTO" ]]; then
+if [[ "${RADIO_DEV}" == "AUTO" ]]; then
 
     unset RADIO_DEV
 
-    if [[ "${DESIGN}" != *"v2"* ]]; then
-
-        if [[ "${INTERFACE}" == "ANY" ]]; then
-            DEVICES=$( ls /dev/spidev* /dev/ttyACM* /dev/ttyUSB* 2> /dev/null )
-        elif [[ "${INTERFACE}" == "SPI" ]]; then
-            DEVICES=$( ls /dev/spidev* 2> /dev/null )
-        else
-            DEVICES=$( ls /dev/ttyACM* /dev/ttyUSB* 2> /dev/null )
-        fi
-
-        FOUND=0
-        RADIO_NUM=${RADIO_NUM:-1}
-        for DEVICE in $DEVICES; do
-            #echo "Checking $DESIGN on $DEVICE"
-            RESPONSE=$( chip_id $DESIGN $DEVICE )
-            if [[ "${RESPONSE}" != "" ]]; then
-                FOUND=$(( $FOUND + 1 ))
-                if [[ ${FOUND} -eq $RADIO_NUM ]]; then
-                    RADIO_DEV=$DEVICE
-                    break
-                fi
-            fi
-        done
-
-        if [[ ${FOUND} -eq 0 ]]; then
-            echo -e "${COLOR_WARNING}ERROR: RADIO_DEV set to auto discover but no concentrator found! (INTERFACE set to $INTERFACE) ${COLOR_END}"
-        else
-            if [[ "${INTERFACE}" == "ANY" ]]; then
-                if [[ "${RADIO_DEV}" == *"spi"* ]]; then 
-                    INTERFACE="SPI"
-                else 
-                    INTERFACE="USB"
-                fi
-            fi
-        fi
-    
+    # Grab potential devices based on interface
+    if [[ "${INTERFACE}" == "ANY" ]]; then
+        DEVICES=$( ls /dev/spidev* /dev/ttyACM* /dev/ttyUSB* 2> /dev/null )
+    elif [[ "${INTERFACE}" == "SPI" ]]; then
+        DEVICES=$( ls /dev/spidev* 2> /dev/null )
+    else
+        DEVICES=$( ls /dev/ttyACM* /dev/ttyUSB* 2> /dev/null )
     fi
+
+    # Configure reset script for SPI concentrators
+    if [[ "${INTERFACE}" == "ANY" ]] || [[ "${INTERFACE}" == "SPI" ]]; then
+        cp reset_lgw.sh.legacy reset_lgw.sh
+        sed -i "s#{{RESET_GPIO}}#\"${RESET_GPIO:-6 17}\"#" reset_lgw.sh
+        sed -i "s#{{POWER_EN_GPIO}}#${POWER_EN_GPIO:-0}#" reset_lgw.sh
+        sed -i "s#{{POWER_EN_LOGIC}}#${POWER_EN_LOGIC:-0}#" reset_lgw.sh
+        chmod +x reset_lgw.sh
+    fi
+
+    # Look for devices
+    FOUND=0
+    RADIO_NUM=${RADIO_NUM:-1}
+    for DEVICE in $DEVICES; do
+        echo "Checking $DESIGN on $DEVICE"
+        RESPONSE=$( chip_id $DESIGN $DEVICE )
+        if [[ "${RESPONSE}" != "" ]]; then
+            FOUND=$(( $FOUND + 1 ))
+            if [[ ${FOUND} -eq $RADIO_NUM ]]; then
+                RADIO_DEV=$DEVICE
+                break
+            fi
+        fi
+    done
+
+    # Not found warning
+    if [[ ${FOUND} -eq 0 ]]; then
+        echo -e "${COLOR_WARNING}ERROR: RADIO_DEV set to auto discover but no concentrator found! (INTERFACE set to $INTERFACE) ${COLOR_END}"
+    fi
+
+    # Assign proper INTERFACE
+    if [[ "${INTERFACE}" == "ANY" ]]; then
+        if [[ "${RADIO_DEV}" == *"spi"* ]]; then 
+            INTERFACE="SPI"
+        else 
+            INTERFACE="USB"
+        fi
+    fi
+
 fi
 
 # -----------------------------------------------------------------------------
@@ -231,9 +243,6 @@ POWER_EN_LOGIC=${POWER_EN_LOGIC:-1}
 # -----------------------------------------------------------------------------
 # Copy binaries and scripts
 # -----------------------------------------------------------------------------
-
-# Copy binaries based on configuration
-cp -rf ./artifacts/${DESIGN,,}/* ./
 
 # Create reset file
 USE_LIBGPIOD=${USE_LIBGPIOD:-0}

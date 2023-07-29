@@ -51,6 +51,7 @@ services:
       # you can define it this way
       #RADIO_DEV: "/dev/spidev0.1"
       #RADIO_DEV: "/dev/ttyACM1"
+      #RADIO_DEV: "AUTO"
 
       # Same for the GPS
       # GPS_DEV: "/dev/i2c-1"

@@ -182,9 +182,9 @@ Variable Name | Value | Description | Default
 ------------ | ------------- | ------------- | -------------
 **`MODEL`** | `STRING` | RAKwireless Developer gateway model or WisLink LPWAN module  | 
 **`DESIGN`** | `STRING` | Reference design for the concentrator (`v2/native`, `v2/ftdi`, `corecell`, `2g4`, `picocell`) | Based on `MODEL`
-**`INTERFACE`** | `SPI` or `USB` | Concentrator interface | If `MODEL` is defined it will get the interface type from it, otherwise defaults to `SPI`
+**`INTERFACE`** | `SPI`, `USB` or `ANY` | Concentrator interface. Set to `ANY` to use with auto-discover feature. | If `MODEL` is defined it will get the interface type from it if possible, defaults to `ANY` if the auto-discover feature is enabled or `SPI` otherwise.
 **`HAS_GPS`** | 0 or 1 | Set to 1 if the gateway has GPS | If `MODEL` is defined it will get this from it, otherwise defaults to 1 (with GPS)
-**`RADIO_DEV`** | `STRING` | Where the concentrator is connected to | `/dev/spidev0.0` for SPI concentrators, `/dev/ttyUSB0` or `/dev/ttyACM0` for USB concentrators
+**`RADIO_DEV`** | `STRING` or `AUTO` | Where the concentrator is connected to. Set to `AUTO` for auto-discover. | `/dev/spidev0.0` for SPI concentrators, `/dev/ttyUSB0` or `/dev/ttyACM0` for USB concentrators
 **`SPI_SPEED`** | `INT` | Speed of the SPI interface | 2000000 (2MHz) for SX1301/8 concentrators, 8000000 (8Mhz) for the rest
 **`RESET_GPIO`** | `INT` | GPIO number that resets (Broadcom pin number) | 17
 **`POWER_EN_GPIO`** | `INT` | GPIO number that enables power (by pulling HIGH) to the concentrator (Broadcom pin number). 0 means not required | 0
@@ -215,6 +215,31 @@ Notes:
 
 > If you have more than one concentrator on the same device, you will have to set different GATEWAY_EUI for each one and different `RADIO_DEV` values. Setting the `RADIO_DEV` only works with SX1302 and SX1303 concentrators. So you cannot use two SPI SX1301/SX1308 or two USB SX1301/SX1308 concentrators on the same device since they will both try to use the same port. But you can mix USB and SPI SX1301/SX1308 concentrators without problem. You can also provide a custom `global_conf.json` file to customize how every concentrator should behave. Check the `Use a custom radio configuration` section below.
 
+### Auto-discover
+
+The auto-discover feature is capable of finding connected concentrators to SPI and USB ports as long as they are Corecell, Picocell or 2g4 ones (SX1302, SX1303 and SX1280-based). You can enable this feature by setting the `RADIO_DEV` variable to `AUTO`.
+
+This feature walks the corresponding interfaces until it finds the required concentrator and then resets the `RADIO_DEV` and `INTERFACE` variables accordingly. Doing so takes some time  on boot (up to 3 seconds for each device it checks), if you want to speed up the boot process you can set the `RADIO_DEV` explicitly after looking for it with the `find` utility (see `Find the concentrator` section below).
+
+The following example will start a Corecell concentrator (RAK5146 is based on SX1303) on whatever first interface it finds it (SPI or USB).
+
+```
+version: '2.0'
+
+services:
+
+  udp-packet-forwarder:
+    image: rakwireless/udp-packet-forwarder:latest
+    container_name: udp-packet-forwarder
+    restart: unless-stopped
+    privileged: true
+    network_mode: host
+    environment:
+      MODEL: "RAK5146"
+      RADIO_DEV: "ANY"
+```
+
+
 ### Find the concentrator
 
 The service comes with an utility that tries to find existing concentrators connected to the device. It works with CoreCell, PicoCell and 2.4GHz concentrators.
@@ -242,7 +267,14 @@ The output will be a list of concentrators with the port they are connected to a
 ```
 DEVICE             DESIGN             RESPONSE           
 ---------------------------------------------------------
+/dev/spidev0.0     Corecell           0016C001FF1E5008   
+/dev/spidev0.1     Corecell           
+/dev/ttyUSB0       Corecell           
+/dev/ttyUSB0       2g4                
+/dev/ttyUSB0       Picocell           
 /dev/ttyACM0       Corecell           0016C001FF1BA2BE 
+/dev/ttyACM0       2g4                
+/dev/ttyACM0       Picocell           
 ```
 
 ### Get the EUI of the LoRa Gateway
