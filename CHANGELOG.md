@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.1.0 (2023-08-20)
+
+* Added concentrator discovery feature
+* Modified AS923 plans
+
 ## 2.0.0 (2023-06-05)
 
 * Remove dependency with rak_common_for_gateway code
