@@ -1,10 +1,10 @@
 # Changelog
 
-## Unreleased
+## 2.2.0 (2023-11-13)
 
+* Image for armv6l architecture (#9)
 * If HAS_GPS==0 do not try to connect to GPS (#11)
 * Default value for HAS_GPS is now based on GPS_DEV
-* Image for armv6l architecture
 
 ## 2.1.0 (2023-08-20)
 
