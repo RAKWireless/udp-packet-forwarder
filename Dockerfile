@@ -1,9 +1,10 @@
 ARG ARCH
+ARG IMAGE=${ARCH}
 ARG TAG
 ARG BUILD_DATE
 
 # Builder image
-FROM balenalib/${ARCH}-debian:buster-build as builder
+FROM balenalib/${IMAGE}-debian:buster-build as builder
 ARG ARCH
 
 # Install required development packages
@@ -18,7 +19,7 @@ RUN chmod +x *.sh
 RUN ARCH=${ARCH} ./build.sh
 
 # Runner image
-FROM balenalib/${ARCH}-debian:buster-run as runner
+FROM balenalib/${IMAGE}-debian:buster-run as runner
 ARG ARCH
 ARG TAG
 ARG BUILD_DATE
@@ -35,6 +36,7 @@ LABEL org.label-schema.vcs-url="https://github.com/RAKWireless/udp-packet-forwar
 LABEL org.label-schema.vcs-ref=${TAG}
 LABEL org.label-schema.arch=${ARCH}
 LABEL org.label-schema.license="BSD License 2.0"
+LABEL io.balena.features.balena-api="1"
 
 # Install required runtime packages
 RUN install_packages jq vim libftdi1

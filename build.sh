@@ -53,7 +53,11 @@ manifests:
     platform:
       architecture: arm64
       os: linux  
-  - image: $REGISTRY:arm-latest
+  - image: $REGISTRY:armv7hf-latest
+    platform:
+      architecture: arm
+      os: linux  
+  - image: $REGISTRY:armv6l-latest
     platform:
       architecture: arm
       os: linux  
