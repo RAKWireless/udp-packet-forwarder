@@ -345,25 +345,31 @@ fi
 # GPS Configuration
 # -----------------------------------------------------------------------------
 
-# Models with GPS
-MODELS_WITH_GPS="RAK7243 RAK7243C RAK7244 RAK7244C RAK7246G RAK7248 RAK7248C RAK831 RAK2245 RAK2287 RAK5146"
-if [[ $MODELS_WITH_GPS =~ (^|[[:space:]])$MODEL($|[[:space:]]) ]]; then
-    HAS_GPS=${HAS_GPS:-1}
+# Models with I2C GPS
+MODELS_WITH_I2C_GPS="RAK7243C RAK7244C RAK7248C"
+if [[ $MODELS_WITH_I2C_GPS =~ (^|[[:space:]])$MODEL($|[[:space:]]) ]]; then
+    GPS_DEV=${GPS_DEV:-"/dev/i2c-1"}
 fi
-HAS_GPS=${HAS_GPS:-0}
+
+# Models with UART GPS
+MODELS_WITH_UART_GPS="RAK7243 RAK7244 RAK7246G RAK7248 RAK831 RAK2245 RAK2287 RAK5146"
+if [[ $MODELS_WITH_UART_GPS =~ (^|[[:space:]])$MODEL($|[[:space:]]) ]]; then
+    GPS_DEV=${GPS_DEV:-"/dev/ttyAMA0"}
+fi
+
+# Is GPS interface set?
+if [[ "$GPS_DEV" == "" ]]; then
+    HAS_GPS=0
+else
+    HAS_GPS=${HAS_GPS:-1} 
+    [[ $HAS_GPS -eq 0 ]] && GPS_DEV="" # allows to disable GPS in models with GPS
+fi
 
 # Even if the gateway has a GPS, you can fake it
 [[ $HAS_GPS -eq 1 ]] && FAKE_GPS="false" || FAKE_GPS="true"
 if [[ ! -z ${GPS_LATITUDE} ]]; then
     FAKE_GPS="true"
 fi
-
-# Models with LTE board on it (hence GPS will use I2C)
-MODELS_WITH_LTE="RAK7243C RAK7244C RAK7248C"
-if [[ $MODELS_WITH_LTE =~ (^|[[:space:]])$MODEL($|[[:space:]]) ]]; then
-    GPS_DEV=${GPS_DEV:-"/dev/i2c-1"}
-fi
-GPS_DEV=${GPS_DEV:-"/dev/ttyAMA0"}
 
 # -----------------------------------------------------------------------------
 # Debug
@@ -379,7 +385,6 @@ echo -e "${COLOR_INFO}Radio Device:  $RADIO_DEV${COLOR_END}"
 if [[ "$INTERFACE" == "SPI" ]]; then
 echo -e "${COLOR_INFO}SPI Speed:     $LORAGW_SPI_SPEED${COLOR_END}"
 fi
-echo -e "${COLOR_INFO}Has GPS:       $HAS_GPS${COLOR_END}"
 if [[ $HAS_GPS -eq 1 ]]; then
 echo -e "${COLOR_INFO}GPS Device:    $GPS_DEV${COLOR_END}"
 fi

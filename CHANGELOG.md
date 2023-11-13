@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+* If HAS_GPS==0 do now try to connect to GPS (#11)
+* Default value for HAS_GPS is now based on GPS_DEV
+
 ## 2.1.0 (2023-08-20)
 
 * Added concentrator discovery feature

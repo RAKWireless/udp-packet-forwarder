@@ -36,7 +36,7 @@ services:
       # When using options 2 or 3 above, you will probably have to specify other features of the module.
       # These are the defaults:
       #INTERFACE: "ANY"
-      #HAS_GPS: "1"
+      #HAS_GPS: "0"
       #HAS_LTE: "0"
       #RESET_GPIO: 17
       #POWER_EN_GPIO: 0
@@ -54,7 +54,7 @@ services:
       #RADIO_DEV: "AUTO"
 
       # Same for the GPS
-      # GPS_DEV: "/dev/i2c-1"
+      #GPS_DEV: "/dev/i2c-1"
       #GPS_DEV: "/dev/ttyUSB1"
 
       # The service will define the Gateway EUI based on a network interface: eth0, wlan0 or usb0.
