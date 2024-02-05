@@ -119,10 +119,22 @@ function test_picocell {
 # Create reset file
 # -----------------------------------------------------------------------------
 
-cp reset_lgw.sh.legacy reset_lgw.sh
-sed -i "s#{{RESET_GPIO}}#\"${RESET_GPIO:-6 17}\"#" reset_lgw.sh
+# Raspberry Pi requires using libgpiod with gpiochip4
+if [[ `cat /proc/cpuinfo | grep "Raspberry Pi 5"` != "" ]]; then
+    USE_LIBGPIOD=${USE_LIBGPIOD:-1}
+    GPIO_CHIP=${GPIO_CHIP:-gpiochip4}
+fi
+
+# Create reset file
+if [[ ${USE_LIBGPIOD:-0} -eq 0 ]]; then
+    cp reset_lgw.sh.legacy reset_lgw.sh
+else
+    cp reset_lgw.sh.gpiod reset_lgw.sh
+fi
+sed -i "s#{{GPIO_CHIP}}#${GPIO_CHIP:-gpiochip0}#" reset_lgw.sh
+sed -i "s#{{RESET_GPIO}}#${RESET_GPIO:-17}#" reset_lgw.sh
 sed -i "s#{{POWER_EN_GPIO}}#${POWER_EN_GPIO:-0}#" reset_lgw.sh
-sed -i "s#{{POWER_EN_LOGIC}}#${POWER_EN_LOGIC:-0}#" reset_lgw.sh
+sed -i "s#{{POWER_EN_LOGIC}}#${POWER_EN_LOGIC:-1}#" reset_lgw.sh
 chmod +x reset_lgw.sh
 
 # -----------------------------------------------------------------------------

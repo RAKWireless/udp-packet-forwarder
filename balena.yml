@@ -1,5 +1,5 @@
 name: udp-packet-forwarder
-description: This project deploys a LoRaWAN gateway with UDP Packet Forwarder protocol using Docker. It runs on a Raspberry Pi 3/4, Compute Module 3/4 or balenaFin with SX1301, SX1302, SX1303 or SX1308 LoRa concentrators.
+description: This project deploys a LoRaWAN gateway with UDP Packet Forwarder protocol using Docker. It runs on a Raspberry Pi 3/4/5, Compute Module 3/4 or balenaFin with SX1301, SX1302, SX1303 or SX1308 LoRa concentrators.
 fleetcta: Add LoRaWAN module
 joinable: false
 post-provisioning: Read correct config in the repo README - https://github.com/RAKWireless/udp-packet-forwarder
@@ -28,9 +28,10 @@ data:
   supportedDeviceTypes:
     - fincm3
     - raspberrypi4-64
+    - raspberrypi5
     - raspberry-pi2
     - raspberrypi3
     - raspberrypi3-64
     - raspberrypi400-64
     - raspberrypicm4-ioboard
-version: 2.1.0
+version: 2.3.0

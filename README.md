@@ -11,6 +11,7 @@ Main features:
 
 * Support for AMD64 (x86_64), ARMv8, ARMv7 and ARMv6 architectures.
 * Support for SX1301, SX1302, SX1303 and SX1308 concentrators.
+* Support for 2.4GHz LoRa concentrators based on Semtech's reference design (SX1280)
 * Support for SPI and USB concentrators.
 * Compatible with The Things Stack (Comunity Edition / TTNv3) or Chirpstack LNS amongst others.
 * Almost one click deploy and at the same time highly configurable.
@@ -28,7 +29,7 @@ This project has been tested with The Things Stack Community Edition (TTSCE or T
 As long as the host can run docker containers, the UDP Packet Forwarder service can run on:
 
 * AMD64: most PCs out there
-* ARMv8: Raspberry Pi 3/4, 400, Compute Module 3/4, Zero 2 W,...
+* ARMv8: Raspberry Pi 3/4/5, 400, Compute Module 3/4, Zero 2 W,...
 * ARMv7: Raspberry Pi 2
 * ARMv6: Raspberry Pi Zero, Zero W
 
@@ -59,6 +60,8 @@ Supported RAK LoRa concentrators:
 * SX1308
   * [RAK2287](https://store.rakwireless.com/products/rak2287-lpwan-gateway-concentrator-module)
   * RAK2246
+* SX1280
+  * [RAK5148](https://store.rakwireless.com/products/2-4-ghz-mini-pcie-concentrator-module-for-lora-based-on-sx1280-rak5148)
 
 > **NOTE**: This project focuses on RAKwireless products but products from other manufacturers should also work. You will have to provide the some information to configure them properly, like concentrator type, interface type, reset GPIO,...
 
@@ -184,6 +187,8 @@ Variable Name | Value | Description | Default
 **`INTERFACE`** | `SPI`, `USB` or `ANY` | Concentrator interface. Set to `ANY` to use with auto-discover feature. | If `MODEL` is defined it will get the interface type from it if possible, defaults to `ANY` if the auto-discover feature is enabled or `SPI` otherwise.
 **`RADIO_DEV`** | `STRING` or `AUTO` | Where the concentrator is connected to. Set to `AUTO` for auto-discover. | `/dev/spidev0.0` for SPI concentrators, `/dev/ttyUSB0` or `/dev/ttyACM0` for USB concentrators
 **`SPI_SPEED`** | `INT` | Speed of the SPI interface | 2000000 (2MHz) for SX1301/8 concentrators, 8000000 (8Mhz) for the rest
+**`USE_LIBGPIOD`** | `INT` | Use new gpiod library to access GPIO or old filesystem (sooon deprecated) | 0 (1 for Raspberry Pi 5)
+**`GPIO_CHIP`** | `STRING` | Chip ID to use with gpiod | `gpiochip0` (`gpiochip4` for Raspberry Pi 5)
 **`RESET_GPIO`** | `INT` | GPIO number that resets (Broadcom pin number) | 17
 **`POWER_EN_GPIO`** | `INT` | GPIO number that enables power (by pulling HIGH) to the concentrator (Broadcom pin number). 0 means not required | 0
 **`POWER_EN_LOGIC`** | `INT` | If `POWER_EN_GPIO` is not 0, the corresponding GPIO will be set to this value | 1
@@ -238,6 +243,26 @@ services:
       RADIO_DEV: "ANY"
 ```
 
+### Raspberry Pi 5
+
+The new Raspberry Pi 5 requires using the `gpiod` library to access the GPIO to reset SPI concentrators. The service automatically detects the Raspberry Pi 5 and sets these default like in the example below, but you can still override them:
+
+```
+version: '2.0'
+
+services:
+
+  udp-packet-forwarder:
+    image: rakwireless/udp-packet-forwarder:latest
+    container_name: udp-packet-forwarder
+    restart: unless-stopped
+    privileged: true
+    network_mode: host
+    environment:
+      MODEL: "RAK5146"
+      USE_LIBGPIOD: 1
+      GPIO_CHIP: "gpiochip4"
+```
 
 ### Find the concentrator
 

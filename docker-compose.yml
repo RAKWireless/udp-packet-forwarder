@@ -38,6 +38,10 @@ services:
       #INTERFACE: "ANY"
       #HAS_GPS: "0"
       #HAS_LTE: "0"
+      
+      # GPIO to reset SPI concentrators
+      #USE_LIBGPIOD: 0 # set to 1 by default for Raspberry Pi 5
+      #GPIO_CHIP: gpiochip0 # set to "gpiochip4" by default for Raspberry Pi 5
       #RESET_GPIO: 17
       #POWER_EN_GPIO: 0
       #POWER_EN_LOGIC: 0

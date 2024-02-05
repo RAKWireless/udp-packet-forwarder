@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.3.0 (2024-02-05)
+
+* Support for Raspberry Pi 5
+* Document gpiod use, including chip selection
+
 ## 2.2.0 (2023-11-13)
 
 * Image for armv6l architecture (#9)

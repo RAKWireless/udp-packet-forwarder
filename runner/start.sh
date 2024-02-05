@@ -128,6 +128,50 @@ fi
 cp -rf ./artifacts/${DESIGN,,}/* ./
 
 # -----------------------------------------------------------------------------
+# GPIO configuration
+# -----------------------------------------------------------------------------
+
+# If interface is USB disable RESET_GPIO, otherwise default to 17
+if [[ "$INTERFACE" == "USB" ]]; then
+    RESET_GPIO=${RESET_GPIO:-0}
+else
+    RESET_GPIO=${RESET_GPIO:-17}
+fi
+
+# The RAK833-SPI/USB has a SPDT to select USB/SPI interfaces
+# If used with RAK2247 or RAK2287 hats this is wired to GPIO20
+if [[ "$MODEL" == "RAK833" ]]; then
+    if [[ "$INTERFACE" != "USB" ]]; then
+        POWER_EN_GPIO=${POWER_EN_GPIO:-20}
+        POWER_EN_LOGIC=${POWER_EN_LOGIC:-0}
+    fi
+fi
+
+# Otherwise the default is no power enable pin
+POWER_EN_GPIO=${POWER_EN_GPIO:-0}
+POWER_EN_LOGIC=${POWER_EN_LOGIC:-1}
+
+# Raspberry Pi requires using libgpiod with gpiochip4
+if [[ `cat /proc/cpuinfo | grep "Raspberry Pi 5"` != "" ]]; then
+    USE_LIBGPIOD=${USE_LIBGPIOD:-1}
+    GPIO_CHIP=${GPIO_CHIP:-gpiochip4}
+fi
+
+# Create reset file
+if [[ "${INTERFACE}" == "ANY" ]] || [[ "${INTERFACE}" == "SPI" ]]; then
+    if [[ ${USE_LIBGPIOD:-0} -eq 0 ]]; then
+        cp reset_lgw.sh.legacy reset_lgw.sh
+    else
+        cp reset_lgw.sh.gpiod reset_lgw.sh
+    fi
+    sed -i "s#{{GPIO_CHIP}}#${GPIO_CHIP:-gpiochip0}#" reset_lgw.sh
+    sed -i "s#{{RESET_GPIO}}#${RESET_GPIO:-17}#" reset_lgw.sh
+    sed -i "s#{{POWER_EN_GPIO}}#${POWER_EN_GPIO:-0}#" reset_lgw.sh
+    sed -i "s#{{POWER_EN_LOGIC}}#${POWER_EN_LOGIC:-1}#" reset_lgw.sh
+    chmod +x reset_lgw.sh
+fi
+
+# -----------------------------------------------------------------------------
 # Radio device discovery
 # -----------------------------------------------------------------------------
 
@@ -142,15 +186,6 @@ if [[ "${RADIO_DEV}" == "AUTO" ]]; then
         DEVICES=$( ls /dev/spidev* 2> /dev/null )
     else
         DEVICES=$( ls /dev/ttyACM* /dev/ttyUSB* 2> /dev/null )
-    fi
-
-    # Configure reset script for SPI concentrators
-    if [[ "${INTERFACE}" == "ANY" ]] || [[ "${INTERFACE}" == "SPI" ]]; then
-        cp reset_lgw.sh.legacy reset_lgw.sh
-        sed -i "s#{{RESET_GPIO}}#\"${RESET_GPIO:-6 17}\"#" reset_lgw.sh
-        sed -i "s#{{POWER_EN_GPIO}}#${POWER_EN_GPIO:-0}#" reset_lgw.sh
-        sed -i "s#{{POWER_EN_LOGIC}}#${POWER_EN_LOGIC:-0}#" reset_lgw.sh
-        chmod +x reset_lgw.sh
     fi
 
     # Look for devices
@@ -215,46 +250,6 @@ if [[ ! -e $RADIO_DEV ]]; then
 fi
 
 export LORAGW_SPI=$RADIO_DEV
-
-# -----------------------------------------------------------------------------
-# GPIO configuration
-# -----------------------------------------------------------------------------
-
-# If interface is USB disable RESET_GPIO, otherwise default to 17
-if [[ "$INTERFACE" == "SPI" ]]; then
-    RESET_GPIO=${RESET_GPIO:-17}
-else
-    RESET_GPIO=${RESET_GPIO:-0}
-fi
-
-# The RAK833-SPI/USB has a SPDT to select USB/SPI interfaces
-# If used with RAK2247 or RAK2287 hats this is wired to GPIO20
-if [[ "$MODEL" == "RAK833" ]]; then
-    if [[ "$INTERFACE" == "SPI" ]]; then
-        POWER_EN_GPIO=${POWER_EN_GPIO:-20}
-        POWER_EN_LOGIC=${POWER_EN_LOGIC:-0}
-    fi
-fi
-
-# Otherwise the default is no power enable pin
-POWER_EN_GPIO=${POWER_EN_GPIO:-0}
-POWER_EN_LOGIC=${POWER_EN_LOGIC:-1}
-
-# -----------------------------------------------------------------------------
-# Copy binaries and scripts
-# -----------------------------------------------------------------------------
-
-# Create reset file
-USE_LIBGPIOD=${USE_LIBGPIOD:-0}
-if [[ $USE_LIBGPIOD -eq 0 ]]; then
-    cp reset_lgw.sh.legacy reset_lgw.sh
-else
-    cp reset_lgw.sh.gpiod reset_lgw.sh
-fi
-sed -i "s#{{RESET_GPIO}}#${RESET_GPIO:-17}#" reset_lgw.sh
-sed -i "s#{{POWER_EN_GPIO}}#${POWER_EN_GPIO:-0}#" reset_lgw.sh
-sed -i "s#{{POWER_EN_LOGIC}}#${POWER_EN_LOGIC:-1}#" reset_lgw.sh
-chmod +x reset_lgw.sh
 
 # -----------------------------------------------------------------------------
 # Gateway EUI configuration
@@ -389,6 +384,9 @@ if [[ $HAS_GPS -eq 1 ]]; then
 echo -e "${COLOR_INFO}GPS Device:    $GPS_DEV${COLOR_END}"
 fi
 if [[ "$INTERFACE" == "SPI" ]]; then
+if [[ $USE_LIBGPIOD -eq 1 ]]; then
+echo -e "${COLOR_INFO}GPIO chip:     $GPIO_CHIP${COLOR_END}"
+fi
 echo -e "${COLOR_INFO}Reset GPIO:    $RESET_GPIO${COLOR_END}"
 echo -e "${COLOR_INFO}Enable GPIO:   $POWER_EN_GPIO${COLOR_END}"
 if [[ $POWER_EN_GPIO -ne 0 ]]; then
