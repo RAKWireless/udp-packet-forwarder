@@ -8,10 +8,10 @@ services:
     image: rakwireless/udp-packet-forwarder:latest
 
     # Or comment out image and build it yourself
-    build:
-      context: .
-      args:
-        ARCH: aarch64
+    #build:
+    #  context: .
+    #  args:
+    #    ARCH: aarch64
 
     container_name: udp-packet-forwarder
     restart: unless-stopped
@@ -26,7 +26,7 @@ services:
     #volumes:
     #  - ./global_conf.json:/app/global_conf.json:ro
     
-    environment:
+    #environment:
       
       # To select your concentrator you have 3 options:
       # Option 1: set the MODEL to the device model number (i.e. RAK7371)
@@ -34,7 +34,7 @@ services:
       # Option 2: set the MODEL to the concentrator chip (i.e. SX1303)
       #MODEL: "RAK5146"
       #MODEL: "SX1303"
-      MODEL: "RAK5146"
+      #MODEL: "RAK5146"
 
       # The interface the concentrator uses, either "SPI", "USB" or "ANY". 
       # Use "ANY" coupled with device auto-discover feature below. Defaults to "SPI".
@@ -45,7 +45,7 @@ services:
       # Set it to "AUTO" for auto-discover (works only with Corecell concentrators).
       #DEVICE: "/dev/spidev0.1"
       #DEVICE: "/dev/ttyACM0"
-      DEVICE: "AUTO"
+      #DEVICE: "AUTO"
 
       # GPIO to reset SPI concentrators (these are the defaults)
       #USE_LIBGPIOD: 0 # set to 1 by default for Raspberry Pi 5
@@ -78,7 +78,7 @@ services:
       # 5) The network interface with more traffic
       # For options 3 to 5 you want to use network mode host to get the same EUI accross container reboots
       #GATEWAY_EUI_SOURCE: "enx00e04c68160f"
-      GATEWAY_EUI_SOURCE: "chip"
+      #GATEWAY_EUI_SOURCE: "chip"
 
       # The default LNS server is the European TTN server. 
       # If you still want to use TTN but a different region you can set it this way:
