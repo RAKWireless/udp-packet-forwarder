@@ -2,14 +2,15 @@
 
 # Uses docker buildx and https://github.com/estesp/manifest-tool
 
-ACTION=$@
+FIRST=$1
+ARGS=$@
 MANIFEST_TOOL=manifest-tool
 
 export TAG=$(git rev-parse --short HEAD)
 export VERSION=$(git describe --abbrev=0 --tags)
 export MAJOR=$(git describe --abbrev=0 --tags | cut -d '.' -f1)
-export REGISTRY=${REGISTRY:-"rakwireless/udp-packet-forwarder"}
 export BUILD_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+export REGISTRY=${REGISTRY:-"rakwireless/udp-packet-forwarder"}
 
 # Check we have buildx extension for docker
 docker buildx version &> /dev/null
@@ -18,7 +19,7 @@ if [[ $? -ne 0 ]]; then
   exit 1
 fi
 
-if [ "$ACTION" == "--push" ]; then
+if [ "$FIRST" == "--push" ]; then
 
   # Check we have the manifest modifier tool
   hash $MANIFEST_TOOL &> /dev/null
@@ -39,10 +40,10 @@ if [ "$ACTION" == "--push" ]; then
 fi
 
 # Building
-time docker buildx bake $ACTION
+time docker buildx bake $ARGS
 
 # Merge individual archs into the same tags
-if [ "$ACTION" == "--push" ]; then
+if [ "$FIRST" == "--push" ]; then
 
     MANIFEST=manifest.yaml
     cat > $MANIFEST << EOL

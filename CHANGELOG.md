@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.3.1 (Unreleased)
+
+* Refactor gateway_eui and find_concentrator utilities
+* Support to build address based on TTS tenant
+* Deprecation notice for `RADIO_DEV`, `GATEWAY_EUI_NIC` and `TTN_REGION`
+
 ## 2.3.0 (2024-02-05)
 
 * Support for Raspberry Pi 5

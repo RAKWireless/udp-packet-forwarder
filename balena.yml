@@ -18,20 +18,20 @@ data:
     - BALENA_HOST_CONFIG_dtoverlay: '"disable-bt"'
     - BALENA_HOST_CONFIG_enable_uart: 1
   applicationEnvironmentVariables:
-    - MODEL: "RAK5146"
-    - INTERFACE: "SPI"
-    - RESET_GPIO: 17
-    - POWER_EN_GPIO: 0
-    - POWER_EN_LOGIC: 0
-    - TTN_REGION: "eu1"
+    - MODEL: RAK5146
+    - INTERFACE: SPI
+    - TTN_REGION: eu1
   defaultDeviceType: raspberrypi4-64
   supportedDeviceTypes:
     - fincm3
-    - raspberrypi4-64
-    - raspberrypi5
+    - raspberry-pi
+    - raspberrypi0-2w-64
     - raspberry-pi2
     - raspberrypi3
     - raspberrypi3-64
+    - raspberrypi4-64
     - raspberrypi400-64
     - raspberrypicm4-ioboard
-version: 2.3.0
+    - raspberrypi5
+    - generic
+version: 2.3.1

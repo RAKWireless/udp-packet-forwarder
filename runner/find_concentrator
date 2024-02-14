@@ -1,21 +1,23 @@
 #!/usr/bin/env bash
 
+cd $(dirname $0)
+
 # -----------------------------------------------------------------------------
 #
 # Tries to detect existing concentrators, run by:
 #
-# docker run --privileged --rm rakwireless/udp-packet-forwarder ./find.sh
+# docker run --privileged --rm rakwireless/udp-packet-forwarder find_concentrator
 #
 # By default it will reset the concentrator using GPIO6 and GPIO17, if
 # you know the reset pin is connected to any other GPIO(S) you can use the RESET_GPIO
 # environment variable:
 #
-# docker run --privileged --rm -e RESET_GPIO="12 13" rakwireless/udp-packet-forwarder ./find.sh
+# docker run --privileged --rm -e RESET_GPIO="12 13" rakwireless/udp-packet-forwarder find_concentrator
 #
 # Finally, you can also limit the interfaces to scan by setting SCAN_USB or SCAN_SPI to 0,
 # so this command below will only scan for SUB concentrators:
 #
-# docker run --privileged --rm -e SCAN_SPI=0 rakwireless/udp-packet-forwarder ./find.sh
+# docker run --privileged --rm -e SCAN_SPI=0 rakwireless/udp-packet-forwarder find_concentrator
 #
 # -----------------------------------------------------------------------------
 
@@ -54,9 +56,11 @@ function test_corecell {
     pad $DEVICE $WIDTH " "
     pad "Corecell" $WIDTH " "
     
+    CHIP_ID_COMMAND="/app/artifacts/corecell/chip_id"
+
     local COM_TYPE=""
     if [[ "$DEVICE" == *"tty"* ]]; then COM_TYPE="-u"; fi
-    OUTPUT=$( timeout ${TIMEOUT:-3}s artifacts/corecell/chip_id $COM_TYPE -d $DEVICE )
+    OUTPUT=$( timeout ${TIMEOUT:-3}s $CHIP_ID_COMMAND $COM_TYPE -d $DEVICE )
     STATUS=$?
     
     if [[ $STATUS -eq 0 ]]; then
@@ -77,7 +81,8 @@ function test_2g4 {
         pad $DEVICE $WIDTH " "
         pad "2g4" $WIDTH " "
         
-        OUTPUT=$( timeout ${TIMEOUT:-3}s artifacts/2g4/chip_id -d $DEVICE )
+	    CHIP_ID_COMMAND="/app/artifacts/2g4/chip_id"
+        OUTPUT=$( timeout ${TIMEOUT:-3}s $CHIP_ID_COMMAND -d $DEVICE )
         STATUS=$?
     
         if [[ $STATUS -eq 0 ]]; then
@@ -100,7 +105,8 @@ function test_picocell {
         pad $DEVICE $WIDTH " "
         pad "Picocell" $WIDTH " "
     
-        OUTPUT=$( timeout ${TIMEOUT:-3}s artifacts/picocell/chip_id -d $DEVICE )
+	    CHIP_ID_COMMAND="/app/artifacts/picocell/chip_id"
+        OUTPUT=$( timeout ${TIMEOUT:-3}s $CHIP_ID_COMMAND -d $DEVICE )
         STATUS=$?
     
         if [[ $STATUS -eq 0 ]]; then
@@ -127,12 +133,12 @@ fi
 
 # Create reset file
 if [[ ${USE_LIBGPIOD:-0} -eq 0 ]]; then
-    cp reset_lgw.sh.legacy reset_lgw.sh
+    cp reset.sh.legacy reset_lgw.sh
 else
-    cp reset_lgw.sh.gpiod reset_lgw.sh
+    cp reset.sh.gpiod reset_lgw.sh
 fi
 sed -i "s#{{GPIO_CHIP}}#${GPIO_CHIP:-gpiochip0}#" reset_lgw.sh
-sed -i "s#{{RESET_GPIO}}#${RESET_GPIO:-17}#" reset_lgw.sh
+sed -i "s#{{RESET_GPIO}}#${RESET_GPIO:-6 17}#" reset_lgw.sh
 sed -i "s#{{POWER_EN_GPIO}}#${POWER_EN_GPIO:-0}#" reset_lgw.sh
 sed -i "s#{{POWER_EN_LOGIC}}#${POWER_EN_LOGIC:-1}#" reset_lgw.sh
 chmod +x reset_lgw.sh

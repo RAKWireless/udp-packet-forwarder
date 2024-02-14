@@ -15,8 +15,8 @@ WORKDIR /app
 
 # Checkout and compile remote code
 COPY ./builder/ ./
-RUN chmod +x *.sh
-RUN ARCH=${ARCH} ./build.sh
+RUN chmod +x build
+RUN ARCH=${ARCH} ./build
 
 # Runner image
 FROM balenalib/${IMAGE}-debian:buster-run as runner
@@ -51,7 +51,10 @@ COPY --from=builder /usr/local/lib/libmpsse.so /usr/local/lib/libmpsse.so
 COPY --from=builder /usr/local/lib/libmpsse.a /usr/local/lib/libmpsse.a
 COPY --from=builder /usr/local/include/mpsse.h /usr/local/include/mpsse.h
 COPY ./runner/ ./
-RUN chmod +x *.sh
+RUN chmod +x start gateway_eui find_concentrator
+
+# Add application folder to path
+ENV PATH="${PATH}:/app"
 
 # Launch our binary on container startup.
-CMD ["bash", "start.sh"]
+CMD ["start"]

@@ -4,22 +4,25 @@ services:
 
   udp-packet-forwarder:
     
-    # use pre-defined image
+    # Use pre-defined image
     image: rakwireless/udp-packet-forwarder:latest
 
-    # or comment out image: and build it yourself / with balena services
-    #build:
-    #  context: .
-    #  args:
-    #    ARCH: amd64
-    #    ARCH: aarch64
+    # Or comment out image and build it yourself
+    build:
+      context: .
+      args:
+        ARCH: aarch64
 
     container_name: udp-packet-forwarder
     restart: unless-stopped
-    privileged: true
-    network_mode: host      # required to read main interface MAC instead of virtual one, 
-                            # you don't need this if you set the GATEWAY_EUI manually
-    
+    privileged: true         # set this to true or define the required devices to share with the container under the `devices` tag below
+    network_mode: host       # required to read host interface MAC instead of virtual one, you don't need this if you set the GATEWAY_EUI manually
+
+    #devices:
+    #  - /dev/ttyACM0         # share the device where your concentrator is connected to or set privileged to true above
+    #  - /dev/spidev0.0       # share the device where your concentrator is connected to or set privileged to true above
+    #  - /dev/gpiochip0       # allow the container to access the GPIO (via gpiod) if using an SPI concentrator or set privileged to true above
+
     #volumes:
     #  - ./global_conf.json:/app/global_conf.json:ro
     
@@ -27,48 +30,55 @@ services:
       
       # To select your concentrator you have 3 options:
       # Option 1: set the MODEL to the device model number (i.e. RAK7371)
-      # Option 2: set the MODEL to the concentrator model number (i.e. RAK5146)
+      # Option 2: set the MODEL to the concentrator model number (i.e. RAK5146, WM1302, R11E-LR8...)
       # Option 2: set the MODEL to the concentrator chip (i.e. SX1303)
-      MODEL: "RAK7271"
       #MODEL: "RAK5146"
       #MODEL: "SX1303"
+      MODEL: "RAK5146"
 
-      # When using options 2 or 3 above, you will probably have to specify other features of the module.
-      # These are the defaults:
+      # The interface the concentrator uses, either "SPI", "USB" or "ANY". 
+      # Use "ANY" coupled with device auto-discover feature below. Defaults to "SPI".
       #INTERFACE: "ANY"
-      #HAS_GPS: "0"
-      #HAS_LTE: "0"
-      
-      # GPIO to reset SPI concentrators
+
+      # If you have the concentrator connected to a different port than the default one 
+      # ("/dev/spidev0.0" for SPI or "/dev/ttyACM0" for USB) you can define here.
+      # Set it to "AUTO" for auto-discover (works only with Corecell concentrators).
+      #DEVICE: "/dev/spidev0.1"
+      #DEVICE: "/dev/ttyACM0"
+      DEVICE: "AUTO"
+
+      # GPIO to reset SPI concentrators (these are the defaults)
       #USE_LIBGPIOD: 0 # set to 1 by default for Raspberry Pi 5
-      #GPIO_CHIP: gpiochip0 # set to "gpiochip4" by default for Raspberry Pi 5
+      #GPIO_CHIP: "gpiochip0" # set to "gpiochip4" by default for Raspberry Pi 5
       #RESET_GPIO: 17
       #POWER_EN_GPIO: 0
       #POWER_EN_LOGIC: 0
 
-      # SPI speed is automatically set depending on the concentrator,
-      # but should you have any trouble you can change it like this:
-      #SPI_SPEED: 2000000
+      # Problems with an SPI concentrator are sometimes related to the bus speed,
+      # you can set a different one this way
+      #SPI_SPEED: 8000000
 
-      # If you have the concentrator connected to a different port
-      # than the default ones ("/dev/spidev0.0" for SPI, "/dev/ttyUSB0" or "/dev/ttyACM0" for USB) 
-      # you can define it this way
-      #RADIO_DEV: "/dev/spidev0.1"
-      #RADIO_DEV: "/dev/ttyACM1"
-      #RADIO_DEV: "AUTO"
-
+      # Define whether the device has a GPS or LTE connectivity (legacy)
+      #HAS_GPS: "0"
+      #HAS_LTE: "0"
+      
       # Same for the GPS
       #GPS_DEV: "/dev/i2c-1"
       #GPS_DEV: "/dev/ttyUSB1"
 
-      # The service will define the Gateway EUI based on a network interface: eth0, wlan0 or usb0.
-      # If neither of these exist or you want it to use a different interface you can define the NIC this way.
-      # If you want to use the CHIP ID instead, set this value to "chip".
-      #GATEWAY_EUI_SOURCE: "chip"
+      # You can set a fixed custom Gateway EUI (8 bytes in hex format),
+      # otherwise a GATEWAY_EUI will be retrieved from different sources (see below)
+      #GATEWAY_EUI: "C0B883FFFEC16966"
 
-      # You can also set a custom Gateway EUI (8 bytes in hex format).
-      # This takes precedence over the previous setting
-      #GATEWAY_EUI: "001CC2FFFE423A49"
+      # If no GATEWAY_EUI defined above, the service will define the Gateway EUI based on (in order):
+      # 1) An existing station.conf mounted as volume
+      # 2) The Chip ID (only for Corecell concentrators) if GATEWAY_EUI_SOURCE set to "chip"
+      # 3) The MAC address of the network interface identified by GATEWAY_EUI_SOURCE
+      # 4) The first network interface existing in this list: eth0, wlan0 and usb0
+      # 5) The network interface with more traffic
+      # For options 3 to 5 you want to use network mode host to get the same EUI accross container reboots
+      #GATEWAY_EUI_SOURCE: "enx00e04c68160f"
+      GATEWAY_EUI_SOURCE: "chip"
 
       # The default LNS server is the European TTN server. 
       # If you still want to use TTN but a different region you can set it this way:

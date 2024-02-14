@@ -1,4 +1,5 @@
 variable "TAG" { default = "" }
+variable "VERSION" { default = "" }
 variable "BUILD_DATE" { default = "" }
 variable "REGISTRY" { default = "rakwireless/udp-packet-forwarder" }
 
@@ -12,6 +13,7 @@ target "armv6l" {
         "ARCH" = "armv6l",
         "IMAGE" = "armv5e",
         "TAG" = "${TAG}",
+        "VERSION" = "${VERSION}",
         "BUILD_DATE" = "${BUILD_DATE}"
     }
     platforms = ["linux/arm/v6"]
@@ -22,6 +24,7 @@ target "armv7hf" {
     args = {
         "ARCH" = "armv7hf",
         "TAG" = "${TAG}",
+        "VERSION" = "${VERSION}",
         "BUILD_DATE" = "${BUILD_DATE}"
     }
     platforms = ["linux/arm/v7"]
@@ -32,6 +35,7 @@ target "aarch64" {
     args = {
         "ARCH" = "aarch64",
         "TAG" = "${TAG}",
+        "VERSION" = "${VERSION}",
         "BUILD_DATE" = "${BUILD_DATE}"
     }
     platforms = ["linux/arm64"]
@@ -46,3 +50,4 @@ target "amd64" {
     }
     platforms = ["linux/amd64"]
 }
+
