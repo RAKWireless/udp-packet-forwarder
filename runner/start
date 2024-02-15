@@ -32,7 +32,7 @@ function restart_if_balena() {
 }
 
 # -----------------------------------------------------------------------------
-# Chip ID
+# Utils
 # -----------------------------------------------------------------------------
 
 function chip_id {
@@ -40,31 +40,90 @@ function chip_id {
     local DESIGN=$1
     local DEVICE=$2
     
-    CHIP_ID_COMMAND="/app/artifacts/${DESIGN}/chip_id"
     TIMEOUT=${TIMEOUT:-3}
 
-    if [[ -f $CHIP_ID_COMMAND ]]; then
-        
-        if [[ "$DESIGN" == "2g4" ]]; then
-            echo $( timeout ${TIMEOUT}s $CHIP_ID_COMMAND -d $DEVICE | grep 'EUI' | sed 's/^.*0x//' | tr [a-z] [A-Z] )
-            return
+    if [[ "$DESIGN" == "auto" ]] || [[ "$DESIGN" == "corecell" ]]; then
+        if [[ "$DEVICE" == *"tty"* ]]; then COM_TYPE="-u"; fi
+        local CHIP_ID=$( timeout ${TIMEOUT}s /app/artifacts/corecell/chip_id $COM_TYPE -d $DEVICE | grep 'EUI' | sed 's/^.*0x//' | tr [a-z] [A-Z] )
+        if [[ "${CHIP_ID}" != "" ]]; then
+            OUTPUT=("corecell" $DEVICE $CHIP_ID)
+            return 1
         fi
-        
-        if [[ "$DESIGN" == "corecell" ]]; then
-            if [[ "$DEVICE" == *"tty"* ]]; then COM_TYPE="-u"; fi
-            echo $( timeout ${TIMEOUT}s $CHIP_ID_COMMAND $COM_TYPE -d $DEVICE | grep 'EUI' | sed 's/^.*0x//' | tr [a-z] [A-Z] )
-            return
-        fi
-        
-        #if [[ "$DESIGN" == "picocell" ]]; then
-        #    echo $( timeout ${TIMEOUT}s $CHIP_ID_COMMAND | sed 's/^.*0x//' | tr [a-z] [A-Z] )
-        #    return
-        #fi
-        
     fi
     
-    echo ""
+    #if [[ "$DESIGN" == "auto" ]] || [[ "$DESIGN" == "picocell" ]]; then
+    #    local CHIP_ID=$( timeout ${TIMEOUT}s /app/artifacts/picocell/chip_id | sed 's/^.*0x//' | tr [a-z] [A-Z] )
+    #    if [[ "${CHIP_ID}" != "" ]]; then
+    #        OUTPUT=("picocell" $DEVICE $CHIP_ID)
+    #        return 1
+    #    fi
+    #fi
+        
+    if [[ "$DESIGN" == "auto" ]] || [[ "$DESIGN" == "2g4" ]]; then
+        local CHIP_ID=$( timeout ${TIMEOUT}s /app/artifacts/2g4/chip_id -d $DEVICE | grep 'EUI' | sed 's/^.*0x//' | tr [a-z] [A-Z] )
+        if [[ "${CHIP_ID}" != "" ]]; then
+            OUTPUT=("2g4" $DEVICE $CHIP_ID)
+            return 1
+        fi
+    fi
     
+    return 0
+    
+}
+
+function create_reset {
+
+    local RESET_FILE=/app/reset.sh
+    
+    if [[ "${INTERFACE}" == "USB" ]]; then
+        echo "" > $RESET_FILE
+    else
+        if [[ $USE_LIBGPIOD -eq 0 ]]; then
+            cp /app/reset.sh.legacy $RESET_FILE
+        else
+            cp /app/reset.sh.gpiod $RESET_FILE
+        fi
+        sed -i "s#{{GPIO_CHIP}}#${GPIO_CHIP}#" $RESET_FILE
+        sed -i "s#{{RESET_GPIO}}#${RESET_GPIO:-17}#" $RESET_FILE
+        sed -i "s#{{POWER_EN_GPIO}}#${POWER_EN_GPIO:-0}#" $RESET_FILE
+        sed -i "s#{{POWER_EN_LOGIC}}#${POWER_EN_LOGIC:-1}#" $RESET_FILE
+    fi
+    chmod +x $RESET_FILE
+    ln -s $RESET_FILE /app/reset_lgw.sh 2>/dev/null
+
+}
+
+function discover_concentrator {
+
+    local INTERFACE=$1
+    local DESIGN=$2
+    local RADIO_NUM=$3
+
+    # Grab potential devices based on interface
+    if [[ "${INTERFACE}" == "AUTO" ]]; then
+        DEVICES=$( ls /dev/spidev* /dev/ttyACM* /dev/ttyUSB* 2> /dev/null )
+    elif [[ "${INTERFACE}" == "SPI" ]]; then
+        DEVICES=$( ls /dev/spidev* 2> /dev/null )
+    else
+        DEVICES=$( ls /dev/ttyACM* /dev/ttyUSB* 2> /dev/null )
+    fi
+
+    # Look for devices
+    FOUND=0
+    for DEVICE in $DEVICES; do
+        chip_id ${DESIGN,,} $DEVICE
+        if [[ $? -eq 1 ]]; then
+            FOUND=$(( $FOUND + 1 ))
+            if [[ ${FOUND} -eq $RADIO_NUM ]]; then
+                # We pass the OUTPUT to the caller
+                break
+            fi
+
+        fi
+    done
+
+    return $FOUND
+
 }
 
 # -----------------------------------------------------------------------------
@@ -89,18 +148,43 @@ SERVER_HOST=${SERVER}
 SERVER_PORT=${SERVER_PORT:-1700}
 
 # -----------------------------------------------------------------------------
-# Identify concentrator
+# Auto-discover up-front
 # -----------------------------------------------------------------------------
+
+# If no MODEL defined we try to find the concentrator
+if [[ "${MODEL}" == "" ]] || [[ "${MODEL}" == "AUTO" ]]; then
+    
+    unset MODEL
+
+    create_reset 
+    discover_concentrator ${INTERFACE:-AUTO} ${DESIGN:-AUTO} ${RADIO_NUM:-1}
+    if [[ $? -ne 0 ]]; then
+        
+        DESIGN=${OUTPUT[0]}
+        DEVICE=${OUTPUT[1]}
+        CHIP_ID=${OUTPUT[2]}
+
+        if [[ "${DESIGN}" == "corecell" ]]; then MODEL="SX1302"; fi
+        if [[ "${DESIGN}" == "2g4" ]]; then MODEL="SX1280"; fi
+        if [[ "${DESIGN}" == "picocell" ]]; then MODEL="SX1308"; fi
+
+    else
+    
+        echo -e "${COLOR_ERROR}ERROR: MODEL variable not set and we couldn't find any concentrator!${COLOR_END}"
+	    idle
+
+    fi
+    
+fi
+
+# -----------------------------------------------------------------------------
+# Check MODEL
+# -----------------------------------------------------------------------------
+
 # MODEL can be:
 # * A developing gateway (mostly by RAKwireless), example: RAK7248
 # * A concentrator module (by RAKWireless, IMST, SeeedStudio,...), example: RAK5416
 # * A concentrator chip (Semtech's naming), example: SX1303
-
-# MODEL is the only required variable
-if [[ -z ${MODEL} ]]; then
-    echo -e "${COLOR_ERROR}ERROR: MODEL variable not set${COLOR_END}"
-	idle
-fi
 MODEL=${MODEL^^}
 
 # Get the concentrator based on MODEL
@@ -144,13 +228,14 @@ fi
 
 # Backwards compatibility
 DEVICE=${DEVICE:-$RADIO_DEV}
+if [[ "${INTERFACE}" == "ANY" ]]; then INTERFACE="AUTO"; fi
 
 # Models with USB interface
 MODELS_WITH_USB="RAK7271 RAK7371 R11E-LORA8 R11E-LORA9 R11E-LR8 R11E-LR9 RAK5148 R11E-LR2 SX1280ZXXXXGW1"
 if [[ $MODELS_WITH_USB =~ (^|[[:space:]])$MODEL($|[[:space:]]) ]]; then
     INTERFACE="${INTERFACE:-"USB"}"
 elif [[ "${DEVICE}" == "AUTO" ]]; then
-    INTERFACE=${INTERFACE:-"ANY"}
+    INTERFACE=${INTERFACE:-"AUTO"}
 else
     INTERFACE=${INTERFACE:-"SPI"}
 fi
@@ -172,9 +257,6 @@ elif [[ "${INTERFACE}" == "SPI" ]]; then
 else
     DESIGN=${DESIGN:-"v2/ftdi"}
 fi
-
-# Copy binaries based on configuration
-cp -rf ./artifacts/${DESIGN,,}/* ./
 
 # -----------------------------------------------------------------------------
 # GPIO configuration
@@ -213,97 +295,48 @@ else
     GPIO_CHIP=${GPIO_CHIP:-gpiochip0}
 fi
 
-# -----------------------------------------------------------------------------
 # Create reset file
-# -----------------------------------------------------------------------------
-
-if [[ "${INTERFACE}" == "USB" ]]; then
-    echo "" > reset.sh
-else
-    if [[ $USE_LIBGPIOD -eq 0 ]]; then
-        cp /app/reset.sh.legacy reset.sh
-    else
-        cp /app/reset.sh.gpiod reset.sh
-    fi
-    sed -i "s#{{GPIO_CHIP}}#${GPIO_CHIP}#" reset.sh
-    sed -i "s#{{RESET_GPIO}}#${RESET_GPIO:-17}#" reset.sh
-    sed -i "s#{{POWER_EN_GPIO}}#${POWER_EN_GPIO:-0}#" reset.sh
-    sed -i "s#{{POWER_EN_LOGIC}}#${POWER_EN_LOGIC:-1}#" reset.sh
-fi
-chmod +x reset.sh
-ln -s reset.sh reset_lgw.sh 2>/dev/null
+create_reset
 
 # -----------------------------------------------------------------------------
-# Radio device discovery
+# Radio device auto-discovery
 # -----------------------------------------------------------------------------
 
 if [[ "${DEVICE}" == "AUTO" ]]; then
 
     unset DEVICE
 
-    # Grab potential devices based on interface
-    if [[ "${INTERFACE}" == "ANY" ]]; then
-        DEVICES=$( ls /dev/spidev* /dev/ttyACM* /dev/ttyUSB* 2> /dev/null )
-    elif [[ "${INTERFACE}" == "SPI" ]]; then
-        DEVICES=$( ls /dev/spidev* 2> /dev/null )
+    # Look for concentrator
+    discover_concentrator $INTERFACE $DESIGN ${RADIO_NUM:-1}
+    if [[ $? -ne 0 ]]; then
+
+        DESIGN=${OUTPUT[0]}
+        DEVICE=${OUTPUT[1]}
+        CHIP_ID=${OUTPUT[2]}
+
     else
-        DEVICES=$( ls /dev/ttyACM* /dev/ttyUSB* 2> /dev/null )
-    fi
 
-    # Look for devices
-    FOUND=0
-    RADIO_NUM=${RADIO_NUM:-1}
-    for DEV in $DEVICES; do
-        RESPONSE=$( chip_id $DESIGN $DEV )
-        if [[ "${RESPONSE}" != "" ]]; then
-            FOUND=$(( $FOUND + 1 ))
-            if [[ ${FOUND} -eq $RADIO_NUM ]]; then
-                DEVICE=$DEV
-                CHIP_ID=$RESPONSE
-                break
-            fi
-        fi
-    done
-
-    # Not found warning
-    if [[ ${FOUND} -eq 0 ]]; then
         echo -e "${COLOR_WARNING}ERROR: DEVICE set to auto discover but no concentrator found! (INTERFACE set to $INTERFACE) ${COLOR_END}"
+
     fi
 
 fi
 
-# Assign proper INTERFACE
-if [[ "${INTERFACE}" == "ANY" ]]; then
-    if [[ "${DEVICE}" == *"spi"* ]]; then 
-        INTERFACE="SPI"
-    else 
-        INTERFACE="USB"
-    fi
-fi
-
 # -----------------------------------------------------------------------------
-# Device (port) configuration
+# Radio device defaults
 # -----------------------------------------------------------------------------
 
-# Radio device
-if [[ "${INTERFACE}" == "SPI" ]]; then
-
-    DEVICE=${DEVICE:-"/dev/spidev0.0"}
-
-    # Set default SPI speed and clock source for SX1301 and SX1308 concentrators to 2MHz and radio_1
-    if [[ "${CONCENTRATOR}" == "SX1301" ]] || [[ "${CONCENTRATOR}" == "SX1308" ]]; then
-        SPI_SPEED=${SPI_SPEED:-2000000}
-        CLKSRC=${CLKSRC:-1}
+# If DEVICE not yet defined, use sensible defaults
+if [[ "${DEVICE}" == "" ]]; then
+    if [[ "${INTERFACE}" == "SPI" ]]; then
+        DEVICE=${DEVICE:-"/dev/spidev0.0"}
+    else
+        MODELS_WITHOUT_ACM="RAK833 RAK2247"
+        if [[ $MODELS_WITHOUT_ACM =~ (^|[[:space:]])$MODEL($|[[:space:]]) ]]; then
+            DEVICE=${DEVICE:-"/dev/ttyUSB0"}
+        fi
+        DEVICE=${DEVICE:-"/dev/ttyACM0"}
     fi
-
-else
-
-    MODELS_WITHOUT_ACM="RAK833 RAK2247"
-    if [[ $MODELS_WITHOUT_ACM =~ (^|[[:space:]])$MODEL($|[[:space:]]) ]]; then
-        DEVICE=${DEVICE:-"/dev/ttyUSB0"}
-    fi
-    DEVICE=${DEVICE:-"/dev/ttyACM0"}
-
 fi
 
 # Assert device
@@ -313,6 +346,29 @@ if [[ ! -e $DEVICE ]]; then
 fi
 
 export LORAGW_SPI=$DEVICE
+
+# -----------------------------------------------------------------------------
+# Fix interface based on DEVICE
+# -----------------------------------------------------------------------------
+
+if [[ "${DEVICE}" == *"spi"* ]]; then 
+    INTERFACE="SPI"
+else 
+    INTERFACE="USB"
+fi
+
+# -----------------------------------------------------------------------------
+# Fix SPI speed based on CONCENTRATOR
+# -----------------------------------------------------------------------------
+
+# Set default SPI speed and clock source for SX1301 and SX1308 concentrators to 2MHz and radio_1
+if [[ "${INTERFACE}" == "SPI" ]]; then
+    if [[ "${CONCENTRATOR}" == "SX1301" ]] || [[ "${CONCENTRATOR}" == "SX1308" ]]; then
+        SPI_SPEED=${SPI_SPEED:-2000000}
+        CLKSRC=${CLKSRC:-1}
+    fi
+fi
+
 export LORAGW_SPI_SPEED=${SPI_SPEED:-8000000}
 
 # -----------------------------------------------------------------------------
@@ -324,13 +380,22 @@ GATEWAY_EUI_NIC=${GATEWAY_EUI_NIC:-"manual"}
 GATEWAY_EUI_SOURCE=${GATEWAY_EUI_SOURCE:-$GATEWAY_EUI_NIC}
 
 # Check if we should get the GATEWAY_EUI from the chip
-if [[ "$GATEWAY_EUI" == "" ]]; then
-    if [[ "$GATEWAY_EUI_SOURCE" == "chip" ]]; then
-        GATEWAY_EUI=${CHIP_ID:-$( chip_id $DESIGN $DEVICE )}
+if [[ "$GATEWAY_EUI_SOURCE" == "chip" ]]; then
+
+    # Check if it's already cached
+    if [[ "$CHIP_ID" != "" ]]; then
+        GATEWAY_EUI=${CHIP_ID}    
+    else
+        chip_id $DESIGN $DEVICE
+        if [[ $? -eq 1 ]]; then
+            CHIP_ID=${OUTPUT[2]}
+            GATEWAY_EUI=${CHIP_ID}
+        fi
     fi
+
 fi
 
-# Otherwise, try building it from a NIC MAC
+# If still no GATEWAY_EUI, try building it from a NIC MAC
 if [[ "$GATEWAY_EUI" == "" ]]; then
 
     if [[ "$GATEWAY_EUI_SOURCE" == "chip" ]]; then
@@ -410,16 +475,16 @@ if [[ $MODELS_WITH_UART_GPS =~ (^|[[:space:]])$MODEL($|[[:space:]]) ]]; then
 fi
 
 # Is GPS interface set?
-if [[ "$GPS_DEV" == "" ]]; then
+if [[ "$GPS_DEV" == "" ]] || [[ ! -e $GPS_DEV ]]; then
     HAS_GPS=0
 else
     HAS_GPS=${HAS_GPS:-1} 
-    [[ $HAS_GPS -eq 0 ]] && GPS_DEV="" # allows to disable GPS in models with GPS
 fi
+[[ $HAS_GPS -eq 0 ]] && GPS_DEV="" # allows to disable GPS in models with GPS
 
 # Even if the gateway has a GPS, you can fake it
 [[ $HAS_GPS -eq 1 ]] && FAKE_GPS="false" || FAKE_GPS="true"
-if [[ ! -z ${GPS_LATITUDE} ]]; then
+if [[ "${GPS_LATITUDE}" != "" ]] && [[ "${GPS_LONGITUDE}" != "" ]]; then
     FAKE_GPS="true"
 fi
 
@@ -484,9 +549,9 @@ echo -e "${COLOR_INFO}GPS Device:    ${GPS_DEV}${COLOR_END}"
 fi
 echo -e "${COLOR_INFO}Use fake GPS:  ${FAKE_GPS^^}${COLOR_END}"
 if [[ "$FAKE_GPS" == "true" ]]; then
-echo -e "${COLOR_INFO}Latitude:      ${GPS_LATITUDE}${COLOR_END}"
-echo -e "${COLOR_INFO}Longitude:     ${GPS_LONGITUDE}${COLOR_END}"
-echo -e "${COLOR_INFO}Altitude:      ${GPS_ALTITUDE}${COLOR_END}"
+echo -e "${COLOR_INFO}Latitude:      ${GPS_LATITUDE:-0}${COLOR_END}"
+echo -e "${COLOR_INFO}Longitude:     ${GPS_LONGITUDE:-0}${COLOR_END}"
+echo -e "${COLOR_INFO}Altitude:      ${GPS_ALTITUDE:-0}${COLOR_END}"
 fi 
 if [[ -f ./global_conf.json ]]; then
 echo -e "${COLOR_INFO}Custom global_conf.json found!${COLOR_END}"
@@ -549,4 +614,4 @@ udevadm control --reload-rules && udevadm trigger
 # -----------------------------------------------------------------------------
 
 /app/reset_lgw.sh
-stdbuf -oL /app/lora_pkt_fwd
+stdbuf -oL /app/artifacts/${DESIGN}/lora_pkt_fwd
