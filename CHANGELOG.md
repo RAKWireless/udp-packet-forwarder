@@ -5,6 +5,7 @@
 * Refactor gateway_eui and find_concentrator utilities
 * Auto-discover concentrator up-front if no MODEL defined
 * Support to build address based on TTS tenant
+* Better support for static configuration (breaking changes)
 * Deprecation notice for `RADIO_DEV`, `GATEWAY_EUI_NIC` and `TTN_REGION`
 
 ## 2.3.0 (2024-02-05)

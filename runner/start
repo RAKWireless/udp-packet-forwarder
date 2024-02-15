@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-VERSION=2.3.1
+VERSION=2.4.0
 
 # -----------------------------------------------------------------------------
 # Colors
@@ -73,7 +73,7 @@ function chip_id {
 
 function create_reset {
 
-    local RESET_FILE=/app/reset.sh
+    local RESET_FILE=/app/config/reset.sh
     
     if [[ "${INTERFACE}" == "USB" ]]; then
         echo "" > $RESET_FILE
@@ -89,7 +89,7 @@ function create_reset {
         sed -i "s#{{POWER_EN_LOGIC}}#${POWER_EN_LOGIC:-1}#" $RESET_FILE
     fi
     chmod +x $RESET_FILE
-    ln -s $RESET_FILE /app/reset_lgw.sh 2>/dev/null
+    ln -s $RESET_FILE /app/config/reset_lgw.sh 2>/dev/null
 
 }
 
@@ -127,6 +127,16 @@ function discover_concentrator {
 }
 
 # -----------------------------------------------------------------------------
+# Preparing configuration
+# -----------------------------------------------------------------------------
+
+# Move into configuration folder
+mkdir -p config
+pushd config >> /dev/null
+GLOBAL_CONFIG_FILE=./global_conf.json
+LOCAL_CONFIG_FILE=./local_conf.json
+
+# -----------------------------------------------------------------------------
 # Server configuration
 # -----------------------------------------------------------------------------
 
@@ -146,6 +156,80 @@ else
 fi
 SERVER_HOST=${SERVER}
 SERVER_PORT=${SERVER_PORT:-1700}
+
+# -----------------------------------------------------------------------------
+# Retrieve values from static config files
+# -----------------------------------------------------------------------------
+
+function get_json_property {
+    FILE=$1
+    PROPERTY=$2
+    OUTPUT=$(jq "$PROPERTY" $FILE | grep -v "^null$" | sed 's/"//g' | head -n1)
+    [[ "${OUTPUT}" == "null" ]] && OUTPUT=""
+    [[ "${OUTPUT}" == "" ]] && return 0 || return 1
+}
+
+MODE="DYNAMIC"
+
+for CONFIG_FILE in $GLOBAL_CONFIG_FILE $LOCAL_CONFIG_FILE; do
+    if [[ -f $CONFIG_FILE ]]; then
+
+        # Set as static configuration mode
+        MODE="STATIC"
+
+        # Identify the generic model/concentrator
+        if [[ `grep "SX130x_conf" $CONFIG_FILE` != "" ]]; then
+            if [[ `grep "sx1261_conf" $CONFIG_FILE` != "" ]]; then
+                MODEL=${MODEL:-"SX1303"}
+            else
+                MODEL=${MODEL:-"SX1302"}
+            fi
+        fi
+        if [[ `grep "SX1301_conf" $CONFIG_FILE` != "" ]]; then
+            MODEL=${MODEL:-"SX1301"}
+        fi
+        if [[ `grep "radio_conf" $CONFIG_FILE` != "" ]]; then
+            MODEL=${MODEL:-"SX1280"}
+        fi
+
+        # Get Device
+        get_json_property $CONFIG_FILE '.[].com_path'
+        [[ "${OUTPUT}" != "" ]] && DEVICE=$OUTPUT
+
+        # Get Interface
+        get_json_property $CONFIG_FILE '.[].com_type'
+        [[ "${OUTPUT}" != "" ]] && INTERFACE=$OUTPUT
+        get_json_property $CONFIG_FILE '.gateway_conf.clksrc'
+        [[ "${OUTPUT}" != "" ]] && CLKSRC=$OUTPUT
+
+        # Get Gateway EUI
+        get_json_property $CONFIG_FILE '.gateway_conf.gateway_ID'
+        if [[ "${OUTPUT}" != "" ]]; then
+            GATEWAY_EUI=$OUTPUT
+            GATEWAY_EUI_SOURCE="file"
+        fi
+
+        # Get Server
+        get_json_property $CONFIG_FILE '.gateway_conf.server_address'
+        [[ "${OUTPUT}" != "" ]] && SERVER_HOST=$OUTPUT
+        get_json_property $CONFIG_FILE '.gateway_conf.serv_port_up'
+        [[ "${OUTPUT}" != "" ]] && SERVER_PORT=$OUTPUT
+
+        # Get GPS data
+        get_json_property $CONFIG_FILE '.gateway_conf.gps_tty_path'
+        [[ "${OUTPUT}" != "" ]] && GPS_DEV=$OUTPUT
+        get_json_property $CONFIG_FILE '.gateway_conf.fake_gps'
+        [[ "${OUTPUT}" != "" ]] && FAKE_GPS=$OUTPUT
+        get_json_property $CONFIG_FILE '.gateway_conf.ref_latitude'
+        [[ "${OUTPUT}" != "" ]] && GPS_LATITUDE=$OUTPUT
+        get_json_property $CONFIG_FILE '.gateway_conf.ref_longitude'
+        [[ "${OUTPUT}" != "" ]] && GPS_LONGITUDE=$OUTPUT
+        get_json_property $CONFIG_FILE '.gateway_conf.ref_altitude'
+        [[ "${OUTPUT}" != "" ]] && GPS_ALTITUDE=$OUTPUT
+
+
+    fi
+done
 
 # -----------------------------------------------------------------------------
 # Auto-discover up-front
@@ -257,6 +341,7 @@ elif [[ "${INTERFACE}" == "SPI" ]]; then
 else
     DESIGN=${DESIGN:-"v2/ftdi"}
 fi
+DESIGN=${DESIGN,,}
 
 # -----------------------------------------------------------------------------
 # GPIO configuration
@@ -509,6 +594,7 @@ echo -e ""
 
 echo -e "${COLOR_INFO}Protocol${COLOR_END}"
 echo -e "${COLOR_INFO}------------------------------------------------------------------${COLOR_END}"
+echo -e "${COLOR_INFO}Mode:          ${MODE}${COLOR_END}"
 echo -e "${COLOR_INFO}Protocol:      UDP${COLOR_END}"
 echo -e "${COLOR_INFO}Server:        ${SERVER_HOST}:${SERVER_PORT}${COLOR_END}"
 echo -e "${COLOR_INFO}Band:          ${BAND}${COLOR_END}"
@@ -553,9 +639,6 @@ echo -e "${COLOR_INFO}Latitude:      ${GPS_LATITUDE:-0}${COLOR_END}"
 echo -e "${COLOR_INFO}Longitude:     ${GPS_LONGITUDE:-0}${COLOR_END}"
 echo -e "${COLOR_INFO}Altitude:      ${GPS_ALTITUDE:-0}${COLOR_END}"
 fi 
-if [[ -f ./global_conf.json ]]; then
-echo -e "${COLOR_INFO}Custom global_conf.json found!${COLOR_END}"
-fi
 
 echo -e ""
 
@@ -569,42 +652,33 @@ echo -e ""
 # Generate dynamic configuration files
 # -----------------------------------------------------------------------------
 
-# Global configuration file
-GLOBAL_CONFIG_FILE=global_conf.json
-if [[ ! -f $GLOBAL_CONFIG_FILE ]]; then
-    cp -f ./config/${CONCENTRATOR,,}/global_conf.$BAND.json $GLOBAL_CONFIG_FILE
-    if [[ "$CONCENTRATOR" != "SX1280" ]]; then
-        sed -i "s#\"com_type\":\s*.*,#\"com_type\": \"$INTERFACE\",#" $GLOBAL_CONFIG_FILE
-        sed -i "s#\"com_path\":\s*.*,#\"com_path\": \"$DEVICE\",#" $GLOBAL_CONFIG_FILE
-        sed -i "s#\"gps_tty_path\":\s*.*,#\"gps_tty_path\": \"$GPS_DEV\",#" $GLOBAL_CONFIG_FILE
-    else
-        sed -i "s#\"clksrc\":\s*.*,#\"clksrc\": ${CLKSRC:-0},#" $GLOBAL_CONFIG_FILE
-        sed -i "s#\"tty_path\":\s*.*,#\"tty_path\": \"$DEVICE\",#" $GLOBAL_CONFIG_FILE
-        sed -i "s#\"gateway_ID\":\s*.*,#\"gateway_ID\": \"$GATEWAY_EUI\",#" $GLOBAL_CONFIG_FILE
-        sed -i "s#\"server_address\":\s*.*,#\"server_address\": \"$SERVER_HOST\",#" $GLOBAL_CONFIG_FILE
-        sed -i "s#\"serv_port_up\":\s*.*,#\"serv_port_up\": $SERVER_PORT,#" $GLOBAL_CONFIG_FILE
-        sed -i "s#\"serv_port_down\":\s*.*,#\"serv_port_down\": $SERVER_PORT,#" $GLOBAL_CONFIG_FILE
+for CONFIG_FILE in $GLOBAL_CONFIG_FILE $LOCAL_CONFIG_FILE; do
+
+    if [[ ! -f $CONFIG_FILE ]]; then
+
+        if [[ "$CONFIG_FILE" =~ global ]]; then
+            cp -f /app/templates/${CONCENTRATOR,,}/global_conf.$BAND.json $CONFIG_FILE
+        else
+            cp -f /app/templates/local_conf.json $CONFIG_FILE
+        fi
+
+        sed -i "s#\"com_type\":\s*.*,#\"com_type\": \"$INTERFACE\",#" $CONFIG_FILE
+        sed -i "s#\"com_path\":\s*.*,#\"com_path\": \"$DEVICE\",#" $CONFIG_FILE
+        sed -i "s#\"gps_tty_path\":\s*.*,#\"gps_tty_path\": \"$GPS_DEV\",#" $CONFIG_FILE
+        sed -i "s#\"clksrc\":\s*.*,#\"clksrc\": ${CLKSRC:-0},#" $CONFIG_FILE
+        sed -i "s#\"tty_path\":\s*.*,#\"tty_path\": \"$DEVICE\",#" $CONFIG_FILE
+        sed -i "s#\"gateway_ID\":\s*.*,#\"gateway_ID\": \"$GATEWAY_EUI\",#" $CONFIG_FILE
+        sed -i "s#\"server_address\":\s*.*,#\"server_address\": \"$SERVER_HOST\",#" $CONFIG_FILE
+        sed -i "s#\"serv_port_up\":\s*.*,#\"serv_port_up\": $SERVER_PORT,#" $CONFIG_FILE
+        sed -i "s#\"serv_port_down\":\s*.*,#\"serv_port_down\": $SERVER_PORT,#" $CONFIG_FILE
+        sed -i "s#\"fake_gps\":\s*.*,#\"fake_gps\": $FAKE_GPS,#" $CONFIG_FILE
+        sed -i "s#\"ref_latitude\":\s*.*,#\"ref_latitude\": ${GPS_LATITUDE:-0},#" $CONFIG_FILE
+        sed -i "s#\"ref_longitude\":\s*.*,#\"ref_longitude\": ${GPS_LONGITUDE:-0},#" $CONFIG_FILE
+        sed -i "s#\"ref_altitude\":\s*.*,#\"ref_altitude\": ${GPS_ALTITUDE:-0},#" $CONFIG_FILE
+
     fi
-fi
 
-# Modify local configuration file
-LOCAL_CONFIG_FILE=local_conf.json
-cat > $LOCAL_CONFIG_FILE << EOL
-{
-    "gateway_conf": {
-        "gateway_ID": "$GATEWAY_EUI",
-        "server_address": "$SERVER_HOST",
-        "serv_port_up": $SERVER_PORT,
-        "serv_port_down": $SERVER_PORT,
-        "gps_tty_path": "$GPS_DEV",
-        "fake_gps": $FAKE_GPS,
-        "ref_latitude": ${GPS_LATITUDE:-0},
-        "ref_longitude": ${GPS_LONGITUDE:-0},
-        "ref_altitude": ${GPS_ALTITUDE:-0}
-    }
-}
-EOL
-
+done
 # Setup libraries and USB rules
 ldconfig
 udevadm control --reload-rules && udevadm trigger
@@ -613,5 +687,5 @@ udevadm control --reload-rules && udevadm trigger
 # Start packet forwarder
 # -----------------------------------------------------------------------------
 
-/app/reset_lgw.sh
+/app/config/reset_lgw.sh
 stdbuf -oL /app/artifacts/${DESIGN}/lora_pkt_fwd

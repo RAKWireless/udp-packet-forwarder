@@ -24,7 +24,7 @@ services:
     #  - /dev/gpiochip0       # allow the container to access the GPIO (via gpiod) if using an SPI concentrator or set privileged to true above
 
     #volumes:
-    #  - ./global_conf.json:/app/global_conf.json:ro
+    #  - ./config:/app/config
     
     #environment:
       
