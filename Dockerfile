@@ -39,7 +39,7 @@ LABEL org.label-schema.license="BSD License 2.0"
 LABEL io.balena.features.balena-api="1"
 
 # Install required runtime packages
-RUN install_packages jq vim libftdi1 gpiod
+RUN install_packages jq vim libftdi1 gpiod socat
 
 # Switch to working directory for our app
 WORKDIR /app

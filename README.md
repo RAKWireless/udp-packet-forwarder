@@ -184,8 +184,8 @@ Variable Name | Value | Description | Default
 ------------ | ------------- | ------------- | -------------
 **`MODEL`** | `STRING` | RAKwireless Developer gateway model or WisLink LPWAN module. Leave it empty or set it to 'AUTO' for auto-discover.  | 
 **`DESIGN`** | `STRING` | Reference design for the concentrator (`v2/native`, `v2/ftdi`, `corecell`, `2g4`, `picocell`) | Based on `MODEL`
-**`INTERFACE`** | `SPI`, `USB` or `AUTO` | Concentrator interface. Set to `AUTO` to use with auto-discover feature. | If `MODEL` is defined it will get the interface type from it if possible, defaults to `AUTO` if the auto-discover feature is enabled or `SPI` otherwise.
-**`DEVICE`** | `STRING` or `AUTO` | Where the concentrator is connected to. Set to `AUTO` for auto-discover. | `/dev/spidev0.0` for SPI concentrators, `/dev/ttyUSB0` or `/dev/ttyACM0` for USB concentrators
+**`INTERFACE`** | `SPI`, `USB`, `NET` or `AUTO` | Concentrator interface. Set to `AUTO` to use with auto-discover feature. | If `MODEL` is defined it will get the interface type from it if possible, defaults to `AUTO` if the auto-discover feature is enabled or `SPI` otherwise.
+**`DEVICE`** | `STRING` or `AUTO` | Where the concentrator is connected to. Set to `AUTO` for auto-discover. | `/dev/spidev0.0` for SPI concentrators, `/dev/ttyUSB0` or `/dev/ttyACM0` for USB concentrators, the host IP port 3333 for `NET` connections
 **`SPI_SPEED`** | `INT` | Speed of the SPI interface | `2000000` (2MHz) for SX1301/8 concentrators, `8000000` (8Mhz) for the rest
 **`USE_LIBGPIOD`** | `INT` | Use new gpiod library to access GPIO or old filesystem (sooon deprecated) | `0` (`1` for Raspberry Pi 5)
 **`GPIO_CHIP`** | `STRING` | Chip ID to use with gpiod | `gpiochip0` (`gpiochip4` for Raspberry Pi 5)
@@ -392,6 +392,105 @@ services:
 
 For a USB concentrator you would mount the USB port instead of the SPI port and you won't need to mount the `/sys` volume, but remember to set `RESET_GPIO` to 0 to avoid unwanted errors in the logs.
 
+### Connect to a concentrator remotely
+
+From version 2.4.0, you have the option to connect to a remote concentrator via a TCP link. This is useful to use the service with MacOS since Docker Desktop for MacOS does not let you passthrough USB devices. Therefore you can bypass the USB device as a TCP connection using `ser2net` and mount it back as a UART device inside the container.
+
+First step is to stream the USB device as a TCP connection using `ser2net`. An example configuration file is provided but you will have to change the port of your USB device accordingly:
+
+```
+connection: &con3333
+    accepter: tcp,0.0.0.0,3333
+    enable: on
+    options:
+      kickolduser: true
+    connector: serialdev,
+              /dev/ttyACM1,
+              115200n81,local
+```
+
+In the example above (`ser2net.yaml` file provided with this repo) port `/dev/ttyACM1` is mapped to `0.0.0.0:3333` using 115200bps, 8N1. 
+
+**Attention: any machine with network access to port 3333 will be able to access the USB device, ser2net does not provide any security features. A more secure approach would be to link the service to your host docker IP.**
+
+You can run it as `ser2net -c ser2net.yaml`. 
+
+Once the USB device is available as a TCP stream, we can instruct the UDP Packet Forwarder to use this connection. An example `docker-compose.yml` file can be as follows:
+
+```
+version: '2.0'
+
+services:
+
+  udp-packet-forwarder:
+    image: rakwireless/udp-packet-forwarder:latest
+    container_name: udp-packet-forwarder
+    restart: unless-stopped
+    environment:
+      MODEL: "RAK5146"
+      INTERFACE: "NET"
+      GATEWAY_EUI: "E45F01FFFE517BA8"
+```
+
+When the service boots you will see the information about the network device being used in the summary:
+
+```
+udp-packet-forwarder  | ------------------------------------------------------------------
+udp-packet-forwarder  | UDP Packet Forwarder Container v2.4.0
+udp-packet-forwarder  | (c) RAKwireless 2022-2024
+udp-packet-forwarder  | 
+udp-packet-forwarder  | Based on:
+udp-packet-forwarder  |  * lora_gateway v5.0.1
+udp-packet-forwarder  |  * packet_forwarder v4.0.1
+udp-packet-forwarder  |  * sx1302_hal v2.1.0
+udp-packet-forwarder  |  * picoGW_hal v0.2.3
+udp-packet-forwarder  |  * picoGW_packet_forwarder v0.1.0
+udp-packet-forwarder  |  * gateway_2g4_hal v1.1.0
+udp-packet-forwarder  | ------------------------------------------------------------------
+udp-packet-forwarder  | 
+udp-packet-forwarder  | Protocol
+udp-packet-forwarder  | ------------------------------------------------------------------
+udp-packet-forwarder  | Mode:          DYNAMIC
+udp-packet-forwarder  | Protocol:      UDP
+udp-packet-forwarder  | Server:        eu1.cloud.thethings.network:1700
+udp-packet-forwarder  | Band:          eu_863_870
+udp-packet-forwarder  | Gateway EUI:   E45F01FFFE517BA8
+udp-packet-forwarder  | EUI Source:    manual
+udp-packet-forwarder  | 
+udp-packet-forwarder  | Radio
+udp-packet-forwarder  | ------------------------------------------------------------------
+udp-packet-forwarder  | Model:         RAK5146
+udp-packet-forwarder  | Concentrator:  SX1303
+udp-packet-forwarder  | Design:        CORECELL
+udp-packet-forwarder  | Network link:  172.26.0.1:3333
+udp-packet-forwarder  | Interface:     USB
+udp-packet-forwarder  | Radio Device:  /dev/ttyV0
+udp-packet-forwarder  | 
+udp-packet-forwarder  | Extra
+udp-packet-forwarder  | ------------------------------------------------------------------
+udp-packet-forwarder  | Use fake GPS:  TRUE
+udp-packet-forwarder  | Latitude:      0
+udp-packet-forwarder  | Longitude:     0
+udp-packet-forwarder  | Altitude:      0
+```
+
+By default it will try to reach port 3333/tcp at the host. You can also specify a different connection in the `DEVICE` variable:
+
+```
+version: '2.0'
+
+services:
+
+  udp-packet-forwarder:
+    image: rakwireless/udp-packet-forwarder:latest
+    container_name: udp-packet-forwarder
+    restart: unless-stopped
+    environment:
+      MODEL: "RAK5146"
+      INTERFACE: "NET"
+      DEVICE: "192.168.0.150:4321"
+      GATEWAY_EUI: "E45F01FFFE517BA8"
+```
 
 ### Register your gateway to The Things Stack
 

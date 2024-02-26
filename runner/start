@@ -137,6 +137,17 @@ GLOBAL_CONFIG_FILE=./global_conf.json
 LOCAL_CONFIG_FILE=./local_conf.json
 
 # -----------------------------------------------------------------------------
+# Network device
+# -----------------------------------------------------------------------------
+
+if [[ "${INTERFACE}" == "NET" ]]; then
+    NETLINK=${DEVICE:-$( /sbin/ip route|awk '/default/ { print $3 ":3333" }' )}
+    INTERFACE="USB"
+    DEVICE="/dev/ttyV0"
+    socat pty,link=$DEVICE,waitslave tcp:$NETLINK &
+fi
+
+# -----------------------------------------------------------------------------
 # Server configuration
 # -----------------------------------------------------------------------------
 
@@ -608,6 +619,9 @@ echo -e "${COLOR_INFO}----------------------------------------------------------
 echo -e "${COLOR_INFO}Model:         ${MODEL}${COLOR_END}"
 echo -e "${COLOR_INFO}Concentrator:  ${CONCENTRATOR}${COLOR_END}"
 echo -e "${COLOR_INFO}Design:        ${DESIGN^^}${COLOR_END}"
+if [[ "$NETLINK" != "" ]]; then
+echo -e "${COLOR_INFO}Network link:  ${NETLINK}${COLOR_END}"
+fi
 echo -e "${COLOR_INFO}Interface:     ${INTERFACE}${COLOR_END}"
 echo -e "${COLOR_INFO}Radio Device:  ${DEVICE}${COLOR_END}"
 if [[ "$CHIP_ID" != "" ]]; then

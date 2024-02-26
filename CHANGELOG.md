@@ -7,6 +7,8 @@
 * Support to build address based on TTS tenant
 * Better support for static configuration (breaking changes)
 * Deprecation notice for `RADIO_DEV`, `GATEWAY_EUI_NIC` and `TTN_REGION`
+* Support for remote concentrators via ser2net
+* Support for MacOS (using ser2net)
 
 ## 2.3.0 (2024-02-05)
 

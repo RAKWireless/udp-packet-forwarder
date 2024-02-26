@@ -60,7 +60,8 @@ function test_corecell {
 
     local COM_TYPE=""
     if [[ "$DEVICE" == *"tty"* ]]; then COM_TYPE="-u"; fi
-    OUTPUT=$( timeout ${TIMEOUT:-3}s $CHIP_ID_COMMAND $COM_TYPE -d $DEVICE )
+    [[ "$DEVICE" == *"ttyV"* ]] && TIMEOUT=10 || TIMEOUT=3
+    OUTPUT=$( timeout ${TIMEOUT}s $CHIP_ID_COMMAND $COM_TYPE -d $DEVICE )
     STATUS=$?
     
     if [[ $STATUS -eq 0 ]]; then
@@ -82,7 +83,8 @@ function test_2g4 {
         pad "2g4" $WIDTH " "
         
 	    CHIP_ID_COMMAND="/app/artifacts/2g4/chip_id"
-        OUTPUT=$( timeout ${TIMEOUT:-3}s $CHIP_ID_COMMAND -d $DEVICE )
+        [[ "$DEVICE" == *"ttyV"* ]] && TIMEOUT=10 || TIMEOUT=3
+        OUTPUT=$( timeout ${TIMEOUT}s $CHIP_ID_COMMAND -d $DEVICE )
         STATUS=$?
     
         if [[ $STATUS -eq 0 ]]; then
@@ -106,7 +108,8 @@ function test_picocell {
         pad "Picocell" $WIDTH " "
     
 	    CHIP_ID_COMMAND="/app/artifacts/picocell/chip_id"
-        OUTPUT=$( timeout ${TIMEOUT:-3}s $CHIP_ID_COMMAND -d $DEVICE )
+        [[ "$DEVICE" == *"ttyV"* ]] && TIMEOUT=10 || TIMEOUT=3
+        OUTPUT=$( timeout ${TIMEOUT}s $CHIP_ID_COMMAND -d $DEVICE )
         STATUS=$?
     
         if [[ $STATUS -eq 0 ]]; then
@@ -144,6 +147,16 @@ sed -i "s#{{POWER_EN_LOGIC}}#${POWER_EN_LOGIC:-1}#" reset_lgw.sh
 chmod +x reset_lgw.sh
 
 # -----------------------------------------------------------------------------
+# Network device
+# -----------------------------------------------------------------------------
+
+if [[ "${INTERFACE}" == "NET" ]]; then
+    NETLINK=${DEVICE:-$( /sbin/ip route|awk '/default/ { print $3 ":3333" }' )}
+    DEVICE="/dev/ttyV0"
+    socat pty,link=$DEVICE,waitslave tcp:$NETLINK &
+fi
+
+# -----------------------------------------------------------------------------
 # Test all devices
 # -----------------------------------------------------------------------------
 
@@ -159,9 +172,9 @@ SCAN_SPI=${SCAN_SPI:-1}
 
 if [[ $SCAN_USB -eq 1 ]]; then
     if [[ $SCAN_SPI -eq 1 ]]; then
-        DEVICES=$( ls /dev/spidev* /dev/ttyACM* /dev/ttyUSB* 2> /dev/null )
+        DEVICES=$( ls /dev/spidev* /dev/ttyACM* /dev/ttyUSB* /dev/ttyV* 2> /dev/null )
     else
-        DEVICES=$( ls /dev/ttyACM* /dev/ttyUSB* 2> /dev/null )
+        DEVICES=$( ls /dev/ttyACM* /dev/ttyUSB* /dev/ttyV* 2> /dev/null )
     fi
 else
     if [[ $SCAN_SPI -eq 1 ]]; then
