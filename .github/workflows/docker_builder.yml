@@ -4,7 +4,10 @@ on:
   push:
     branches:
       - "master"
-
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+  
 jobs:
   docker:
     runs-on: ubuntu-latest
