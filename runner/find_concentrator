@@ -71,17 +71,17 @@ function test_device {
             if [[ "$DESIGN" == "corecell" ]]; then
                 if [[ "$DEVICE" == *"tty"* ]]; then COM_TYPE="-u"; fi
                 EUI=$( timeout ${TIMEOUT}s $CHIP_ID_COMMAND $COM_TYPE -d $DEVICE | grep 'EUI' | sed 's/^.*0x//' | tr [a-z] [A-Z] )
-                [[ "$EUI" != "" ]] && break;
+                [[ "$EUI" != "" ]] && break
             fi
             
             if [[ "$DESIGN" == "2g4" ]] && [[ "$DEVICE" == *"tty"* ]]; then 
                 EUI=$( timeout ${TIMEOUT}s $CHIP_ID_COMMAND -d $DEVICE | grep 'EUI' | sed 's/^.*0x//' | tr [a-z] [A-Z] )
-                [[ "$EUI" != "" ]] && break;
+                [[ "$EUI" != "" ]] && break
             fi
             
             if [[ "$DESIGN" == "picocell" ]] && [[ "$DEVICE" == *"tty"* ]]; then 
                 EUI=$( timeout ${TIMEOUT}s $CHIP_ID_COMMAND -d $DEVICE | tr [a-z] [A-Z] )
-                [[ "$EUI" != "" ]] && break;
+                [[ "$EUI" != "" ]] && break
             fi
             
         fi
@@ -137,10 +137,6 @@ fi
 # Test all devices
 # -----------------------------------------------------------------------------
 
-echo
-echo "Looking for devices, this might take some time..."
-echo 
-
 SCAN_USB=${SCAN_USB:-1}
 SCAN_SPI=${SCAN_SPI:-1}
 
@@ -157,6 +153,15 @@ else
         DEVICES=""
     fi
 fi
+
+if [[ "${DEVICES}" == "" ]]; then
+    echo "No available interfaces. Quitting."
+    exit
+fi
+
+echo
+echo "Looking for devices, this might take some time..."
+echo 
 
 for DEVICE in $DEVICES; do
     WIDTH=$( echo "$DEVICE" | wc -m )

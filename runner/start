@@ -101,11 +101,11 @@ function discover_concentrator {
 
     # Grab potential devices based on interface
     if [[ "${INTERFACE}" == "AUTO" ]]; then
-        DEVICES=$( ls /dev/spidev* /dev/ttyACM* /dev/ttyUSB* 2> /dev/null )
+        DEVICES=$( ls /dev/spidev* /dev/ttyACM* /dev/ttyUSB* /dev/ttyV* 2> /dev/null )
     elif [[ "${INTERFACE}" == "SPI" ]]; then
         DEVICES=$( ls /dev/spidev* 2> /dev/null )
     else
-        DEVICES=$( ls /dev/ttyACM* /dev/ttyUSB* 2> /dev/null )
+        DEVICES=$( ls /dev/ttyACM* /dev/ttyUSB* /dev/ttyV* 2> /dev/null )
     fi
 
     # Look for devices
@@ -206,6 +206,7 @@ for CONFIG_FILE in $GLOBAL_CONFIG_FILE $LOCAL_CONFIG_FILE; do
         # Get Device
         get_json_property $CONFIG_FILE '.[].com_path'
         [[ "${OUTPUT}" != "" ]] && DEVICE=$OUTPUT
+	[[ "${DEVICE}" == *"spi"* ]] && INTERFACE="SPI" || INTERFACE="USB"
 
         # Get Interface
         get_json_property $CONFIG_FILE '.[].com_type'
@@ -442,13 +443,10 @@ if [[ ! -e $DEVICE ]]; then
     idle
 fi
 
-export LORAGW_SPI=$DEVICE
-
-# -----------------------------------------------------------------------------
 # Fix interface based on DEVICE
-# -----------------------------------------------------------------------------
-
 [[ "${DEVICE}" == *"spi"* ]] && INTERFACE="SPI" || INTERFACE="USB"
+
+export LORAGW_SPI=$DEVICE
 
 # -----------------------------------------------------------------------------
 # Fix SPI speed based on CONCENTRATOR
