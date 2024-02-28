@@ -1,7 +1,7 @@
 variable "TAG" { default = "" }
 variable "VERSION" { default = "" }
 variable "BUILD_DATE" { default = "" }
-variable "REGISTRY" { default = "rakwireless/udp-packet-forwarder" }
+variable "REGISTRY" { default = "comtek6/sniffer" }
 
 group "default" {
     targets = ["armv6l", "armv7hf", "aarch64", "amd64"]
