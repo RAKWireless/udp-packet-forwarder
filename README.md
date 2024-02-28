@@ -2,6 +2,29 @@
 
 This project deploys a LoRaWAN gateway with UDP Packet Forwarder protocol using Docker. It runs on any amd64/x86_64 PC, or a SBC like a Raspberry Pi 3/4, Compute Module 3/4 or balenaFin using SX1301, SX1302, SX1303 or SX1308 LoRa concentrators.
 
+## Table of Contents
+
+- [Introduction](#introduction)
+- [Requirements](#requirements)
+    - [Hardware](#hardware)
+        - [LoRa Concentrators](#lora-concentrators)
+    - [Software](#software)
+- [Installing docker & docker-compose on the OS](#installing-docker--docker-compose-on-the-os)
+- [Deploy the code](#deploy-the-code)
+    - [Via docker-compose](#via-docker-compose)
+    - [Build the image not required](#build-the-image-not-required)
+    - [Deploy with balena](#deploy-with-balena)
+- [Configure the Gateway](#configure-the-gateway)
+    - [Service Variables](#service-variables)
+    - [Auto-discover](#auto-discover)
+    - [Raspberry Pi 5](#raspberry-pi-5)
+    - [Find the concentrator](#find-the-concentrator)
+    - [Get the EUI of the Gateway](#get-the-eui-of-the-gateway)
+    - [Use a custom radio configuration](#use-a-custom-radio-configuration)
+    - [Running with less privileges](#running-with-less-privileges)
+    - [Connect to a concentrator remotely](#connect-to-a-concentrator-remotely)
+    - [Register your gateway to The Things Stack](#register-your-gateway-to-the-things-stack)
+- [Troubleshoothing](#troubleshoothing)
 
 ## Introduction
 
