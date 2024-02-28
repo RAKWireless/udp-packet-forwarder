@@ -39,7 +39,7 @@ function chip_id {
 
     local DESIGN=$1
     local DEVICE=$2
-    
+
     TIMEOUT=${TIMEOUT:-3}
 
     if [[ "$DESIGN" == "auto" ]] || [[ "$DESIGN" == "corecell" ]]; then
@@ -52,7 +52,7 @@ function chip_id {
     fi
     
     #if [[ "$DESIGN" == "auto" ]] || [[ "$DESIGN" == "picocell" ]]; then
-    #    local CHIP_ID=$( timeout ${TIMEOUT}s /app/artifacts/picocell/chip_id | sed 's/^.*0x//' | tr [a-z] [A-Z] )
+    #    local CHIP_ID=$( timeout ${TIMEOUT}s /app/artifacts/picocell/chip_id -d $DEVICE | tr [a-z] [A-Z] )
     #    if [[ "${CHIP_ID}" != "" ]]; then
     #        OUTPUT=("picocell" $DEVICE $CHIP_ID)
     #        return 1
@@ -74,7 +74,7 @@ function chip_id {
 function create_reset {
 
     local RESET_FILE=/app/config/reset.sh
-    
+
     if [[ "${INTERFACE}" == "USB" ]]; then
         echo "" > $RESET_FILE
     else
@@ -258,6 +258,7 @@ if [[ "${MODEL}" == "" ]] || [[ "${MODEL}" == "AUTO" ]]; then
         DESIGN=${OUTPUT[0]}
         DEVICE=${OUTPUT[1]}
         CHIP_ID=${OUTPUT[2]}
+        [[ "${DEVICE}" == *"spi"* ]] && INTERFACE="SPI" || INTERFACE="USB"
 
         if [[ "${DESIGN}" == "corecell" ]]; then MODEL="SX1302"; fi
         if [[ "${DESIGN}" == "2g4" ]]; then MODEL="SX1280"; fi
@@ -447,11 +448,7 @@ export LORAGW_SPI=$DEVICE
 # Fix interface based on DEVICE
 # -----------------------------------------------------------------------------
 
-if [[ "${DEVICE}" == *"spi"* ]]; then 
-    INTERFACE="SPI"
-else 
-    INTERFACE="USB"
-fi
+[[ "${DEVICE}" == *"spi"* ]] && INTERFACE="SPI" || INTERFACE="USB"
 
 # -----------------------------------------------------------------------------
 # Fix SPI speed based on CONCENTRATOR
@@ -702,4 +699,9 @@ udevadm control --reload-rules && udevadm trigger
 # -----------------------------------------------------------------------------
 
 /app/config/reset_lgw.sh
-stdbuf -oL /app/artifacts/${DESIGN}/lora_pkt_fwd
+
+OPTIONS=""
+if [[ "${DESIGN}" == "picocell" ]]; then
+    OPTIONS=" -d $DEVICE"
+fi 
+stdbuf -oL /app/artifacts/${DESIGN}/lora_pkt_fwd $OPTIONS
