@@ -4,6 +4,6 @@ connection: &con3333
     options:
       kickolduser: true
     connector: serialdev,
-              /dev/ttyACM1,
+              /dev/ttyACM0,
               115200n81,local
  

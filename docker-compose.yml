@@ -63,15 +63,7 @@ services:
       # you can set a different one this way
       #SPI_SPEED: 8000000
 
-      # Define whether the device has a GPS or LTE connectivity (legacy)
-      #HAS_GPS: "0"
-      #HAS_LTE: "0"
-      
-      # Same for the GPS
-      #GPS_DEV: "/dev/i2c-1"
-      #GPS_DEV: "/dev/ttyUSB1"
-
-      # Each gateway is identified by tis Gateway EUI (8 bytes in hex format)
+      # Each gateway is identified by its Gateway EUI (8 bytes in hex format)
       # The procedure to defined that EUI is as follows:
       # 1) It will use the concentrator Chip ID if GATEWAY_EUI_SOURCE set to "chip" (will work only for Corecell and 2g4 concentrators)
       # 2) It will use the GATEWAY_EUI variable below if defined
@@ -94,6 +86,14 @@ services:
       # The default frequency band is EU868, 
       # if your module uses a different band you have to select it here:
       #BAND: "cn_470_510"
+
+      # Define whether the device has a GPS or LTE connectivity (legacy)
+      #HAS_GPS: "0"
+      #HAS_LTE: "0"
+      
+      # Same for the GPS
+      #GPS_DEV: "/dev/i2c-1"
+      #GPS_DEV: "/dev/ttyUSB1"
 
       # If you want the gateway to report a specific lat/lon/alt you can set them this way:
       #GPS_LATITUDE: 41.42
