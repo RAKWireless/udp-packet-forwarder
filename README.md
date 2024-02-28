@@ -225,7 +225,9 @@ Notes:
 
 ### Auto-discover
 
-The auto-discover feature is capable of finding connected concentrators to SPI and USB ports as long as they are Corecell or 2g4 ones (SX1302, SX1303 and SX1280-based). You can enable this feature by setting the `DEVICE` variable to `AUTO`.
+The auto-discover feature is capable of finding connected concentrators to SPI and USB ports as long as they are Corecell or 2g4 ones (SX1302, SX1303 and SX1280-based). You can enable this feature by setting the `DEVICE` variable to `AUTO`. 
+
+*Note: up-front auto-discover does not work properly with PicoCell concentrators yet. You can still use the `./find_concentrator` script, thou.*
 
 This feature walks the corresponding interfaces until it finds the required concentrator and then resets the `DEVICE` and `INTERFACE` variables accordingly. Doing so takes some time  on boot (up to 3 seconds for each device it checks), if you want to speed up the boot process you can set the `DEVICE` explicitly after looking for it with the `find` utility (see `Find the concentrator` section below).
 
@@ -270,7 +272,7 @@ services:
 
 ### Find the concentrator
 
-The service comes with an utility that tries to find existing concentrators connected to the device. It works with CoreCell and 2.4GHz concentrators.
+The service comes with an utility that tries to find existing concentrators connected to the device. It works with CoreCell, PicoCell and 2.4GHz concentrators.
 
 You can run the tool (with the service shut down) by: 
 
@@ -299,14 +301,16 @@ docker run --privileged --rm -e SCAN_SPI=0 rakwireless/udp-packet-forwarder find
 The output will be a list of concentrators with the port they are connected to and the EUI:
 
 ```
-DEVICE             DESIGN             RESPONSE           
----------------------------------------------------------
-/dev/spidev0.0     Corecell           0016C001FF1E5008   
-/dev/spidev0.1     Corecell           
-/dev/ttyUSB0       Corecell           
-/dev/ttyUSB0       2g4                
-/dev/ttyACM0       Corecell           0016C001FF1BA2BE 
-/dev/ttyACM0       2g4                
+Looking for devices, this might take some time...
+
+DEVICE            DESIGN      RESPONSE            
+--------------------------------------------------
+/dev/spidev0.0    corecell    0016C001FFXXXXXX
+/dev/ttyUSB0      2g4         54112205FFXXXXXX
+/dev/ttyACM0      corecell    0016C001FFXXXXXX 
+/dev/ttyACM1      picocell    5031395343XXXXXX    
+
+1 device(s) found!
 ```
 
 ### Get the EUI of the Gateway

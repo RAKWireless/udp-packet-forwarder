@@ -9,6 +9,7 @@
 * Deprecation notice for `RADIO_DEV`, `GATEWAY_EUI_NIC` and `TTN_REGION`
 * Support for remote concentrators via ser2net
 * Support for MacOS (using ser2net)
+* Fixed support for picocell concentrators (no up-front auto-discover)
 
 ## 2.3.0 (2024-02-05)
 
