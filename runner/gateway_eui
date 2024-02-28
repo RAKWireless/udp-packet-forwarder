@@ -16,6 +16,12 @@ function chip_id {
 
     if [[ -f $CHIP_ID_COMMAND ]]; then
         
+        if [[ "$DESIGN" == "corecell" ]]; then
+            if [[ "$DEVICE" == *"tty"* ]]; then COM_TYPE="-u"; fi
+            echo $( timeout ${TIMEOUT}s $CHIP_ID_COMMAND $COM_TYPE -d $DEVICE | grep 'EUI' | sed 's/^.*0x//' | tr [a-z] [A-Z] )
+            return
+        fi
+        
         if [[ "$DESIGN" == "2g4" ]]; then
             if [[ "$DEVICE" == *"tty"* ]]; then 
                 echo $( timeout ${TIMEOUT}s $CHIP_ID_COMMAND -d $DEVICE | grep 'EUI' | sed 's/^.*0x//' | tr [a-z] [A-Z] )
@@ -23,16 +29,12 @@ function chip_id {
             fi
         fi
         
-        if [[ "$DESIGN" == "corecell" ]]; then
-            if [[ "$DEVICE" == *"tty"* ]]; then COM_TYPE="-u"; fi
-            echo $( timeout ${TIMEOUT}s $CHIP_ID_COMMAND $COM_TYPE -d $DEVICE | grep 'EUI' | sed 's/^.*0x//' | tr [a-z] [A-Z] )
-            return
+        if [[ "$DESIGN" == "picocell" ]]; then
+            if [[ "$DEVICE" == *"tty"* ]]; then
+                echo $( timeout ${TIMEOUT}s $CHIP_ID_COMMAND -d $DEVICE | tr [a-z] [A-Z] )
+                return
+            fi
         fi
-        
-        #if [[ "$DESIGN" == "picocell" ]]; then
-        #    echo $( timeout ${TIMEOUT}s $CHIP_ID_COMMAND | sed 's/^.*0x//' | tr [a-z] [A-Z] )
-        #    return
-        #fi
         
     fi
     
@@ -96,7 +98,7 @@ elif [[ "$GATEWAY_EUI_SOURCE" == "chip" ]]; then
     # Look for devices
     FOUND=0
     for DEVICE in $DEVICES; do
-        for DESIGN in corecell 2g4; do
+        for DESIGN in corecell 2g4 picocell; do
             RESPONSE=$( chip_id $DESIGN $DEVICE )
             if [[ "${RESPONSE}" != "" ]]; then
                 echo "Gateway EUI: ${RESPONSE^^} (based on $DESIGN concentrator at $DEVICE)"
