@@ -78,15 +78,15 @@ chmod +x reset_lgw.sh
 # Entry point
 # -----------------------------------------------------------------------------
 
-if [[ -f /app/local_conf.json ]]; then
+if [[ -f /app/config/local_conf.json ]]; then
 
-    GATEWAY_EUI=$(cat /app/local_conf.json | jq '.gateway_conf.gateway_ID' | sed 's/"//g')
+    GATEWAY_EUI=$(cat /app/config/local_conf.json | jq '.gateway_conf.gateway_ID' | sed 's/"//g')
 
     echo "Gateway EUI: ${GATEWAY_EUI^^} (read from local_conf.conf)"
 
-elif [[ -f /app/global_conf.json ]]; then
+elif [[ -f /app/config/global_conf.json ]]; then
 
-    GATEWAY_EUI=$(cat /app/global_conf.json | jq '.gateway_conf.gateway_ID' | sed 's/"//g')
+    GATEWAY_EUI=$(cat /app/config/global_conf.json | jq '.gateway_conf.gateway_ID' | sed 's/"//g')
 
     echo "Gateway EUI: ${GATEWAY_EUI^^} (read from global_conf.conf)"
 
