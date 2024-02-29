@@ -1,6 +1,6 @@
 # Changelog
 
-## 2.4.0 (Unreleased)
+## 2.4.0 (2024-02-29)
 
 * Refactor gateway_eui and find_concentrator utilities
 * Auto-discover concentrator up-front if no MODEL defined
