@@ -35,15 +35,15 @@ services:
       #MODEL: "RAK5146"
       #MODEL: "SX1303"
 
-      # The interface the concentrator uses, either "SPI", "USB" or "AUTO". 
+      # The interface the concentrator uses, either "SPI", "USB", "NET" or "AUTO". 
       # Use "AUTO" coupled with device auto-discover feature below. Defaults to "SPI".
       #INTERFACE: "AUTO"
       #INTERFACE: "NET"
 
       # If you have the concentrator connected to a different port than the default one 
-      # ("/dev/spidev0.0" for SPI or "/dev/ttyACM0" for USB) you can define here.
-      # Set it to "AUTO" for auto-discover (works only with Corecell concentrators).
-      #DEVICE: "/dev/spidev0.1"
+      # ("/dev/spidev0.0" for SPI, "/dev/ttyACM0" for USB or "<hostip>:3333" for NET) you can define here.
+      # Set it to "AUTO" for auto-discover (works only with local Corecell & 2g4 concentrators).
+      #DEVICE: "/dev/spidev0.0"
       #DEVICE: "/dev/ttyACM0"
       #DEVICE: "192.168.1.86:3333"
       #DEVICE: "AUTO"
@@ -57,7 +57,7 @@ services:
       #GPIO_CHIP: "gpiochip0" # set to "gpiochip4" by default for Raspberry Pi 5
       #RESET_GPIO: 17
       #POWER_EN_GPIO: 0
-      #POWER_EN_LOGIC: 0
+      #POWER_EN_LOGIC:1
 
       # Problems with an SPI concentrator are sometimes related to the bus speed,
       # you can set a different one this way
@@ -65,12 +65,13 @@ services:
 
       # Each gateway is identified by its Gateway EUI (8 bytes in hex format)
       # The procedure to defined that EUI is as follows:
-      # 1) It will use the concentrator Chip ID if GATEWAY_EUI_SOURCE set to "chip" (will work only for Corecell and 2g4 concentrators)
-      # 2) It will use the GATEWAY_EUI variable below if defined
-      # 3) It will use the MAC address of the network interface identified by GATEWAY_EUI_SOURCE
-      # 4) It will use the MAC address of the first existing network interface in this list: eth0, wlan0 and usb0
-      # 5) It will use the MAC address of the network interface with more traffic
-      # For options 3 to 5 you want to use network mode host to get the same EUI accross container reboots
+      # 1) It will use the EUI in the configuration files provided if any
+      # 2) It will use the concentrator Chip ID if GATEWAY_EUI_SOURCE set to "chip" (will work only for Corecell concentrators)
+      # 3) It will use the GATEWAY_EUI variable below if defined
+      # 4) It will use the MAC address of the network interface identified by GATEWAY_EUI_SOURCE
+      # 5) It will use the MAC address of the first existing network interface in this list: eth0, wlan0 and usb0
+      # 6) It will use the MAC address of the network interface with more traffic
+      # For options 4 to 6 you want to use network mode host to get the same EUI accross container reboots
       #GATEWAY_EUI_SOURCE: "enx00e04c68160f"
       #GATEWAY_EUI_SOURCE: "chip"
       #GATEWAY_EUI: "00E04CFFFE68160F"

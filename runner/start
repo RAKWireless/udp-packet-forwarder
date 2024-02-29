@@ -40,7 +40,7 @@ function chip_id {
     local DESIGN=$1
     local DEVICE=$2
 
-    TIMEOUT=${TIMEOUT:-3}
+    [[ "$DEVICE" == *"ttyV"* ]] && TIMEOUT=10 || TIMEOUT=3
 
     if [[ "$DESIGN" == "auto" ]] || [[ "$DESIGN" == "corecell" ]]; then
         if [[ "$DEVICE" == *"tty"* ]]; then COM_TYPE="-u"; fi
@@ -71,7 +71,7 @@ function chip_id {
     
 }
 
-function create_reset {
+function create_reset_file {
 
     local RESET_FILE=/app/config/reset.sh
 
@@ -252,7 +252,7 @@ if [[ "${MODEL}" == "" ]] || [[ "${MODEL}" == "AUTO" ]]; then
     
     unset MODEL
 
-    create_reset 
+    create_reset_file 
     discover_concentrator ${INTERFACE:-AUTO} ${DESIGN:-AUTO} ${RADIO_NUM:-1}
     if [[ $? -ne 0 ]]; then
         
@@ -394,7 +394,7 @@ else
 fi
 
 # Create reset file
-create_reset
+create_reset_file
 
 # -----------------------------------------------------------------------------
 # Radio device auto-discovery
@@ -443,7 +443,7 @@ if [[ ! -e $DEVICE ]]; then
     idle
 fi
 
-# Fix interface based on DEVICE
+# Fix INTERFACE based on DEVICE
 [[ "${DEVICE}" == *"spi"* ]] && INTERFACE="SPI" || INTERFACE="USB"
 
 export LORAGW_SPI=$DEVICE
@@ -585,7 +585,7 @@ fi
 
 echo -e "${COLOR_WARNING}------------------------------------------------------------------${COLOR_END}"
 echo -e "${COLOR_WARNING}UDP Packet Forwarder Container v${VERSION}${COLOR_END}"
-echo -e "${COLOR_WARNING}(c) RAKwireless 2022-2024${COLOR_END}"
+echo -e "${COLOR_WARNING}(c) RAKWireless 2022-2024${COLOR_END}"
 echo -e ""
 echo -e "${COLOR_WARNING}Based on:${COLOR_END}"
 echo -e "${COLOR_WARNING} * lora_gateway v5.0.1${COLOR_END}"
