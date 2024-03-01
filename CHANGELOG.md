@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.4.1 (2024-03-01)
+
+* Fixed bug in SERVER_HOST setting
+* Fixed `gateway_eui` script not retrieving EUI from configuration files first
+* Catching errors in `reset` script
+
 ## 2.4.0 (2024-02-29)
 
 * Refactor gateway_eui and find_concentrator utilities
