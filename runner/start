@@ -165,7 +165,7 @@ if [[ "$TTS_TENANT" == "ttn" ]]; then
 else
     SERVER=${SERVER:-"${TTS_TENANT}.${TTS_REGION}.cloud.thethings.industries"}
 fi
-SERVER_HOST=${SERVER}
+SERVER_HOST=${SERVER_HOST:-$SERVER}
 SERVER_PORT=${SERVER_PORT:-1700}
 
 # -----------------------------------------------------------------------------
