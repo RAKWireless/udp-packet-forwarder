@@ -22,8 +22,8 @@ This project deploys a LoRaWAN gateway with UDP Packet Forwarder protocol using 
     - [Get the EUI of the Gateway](#get-the-eui-of-the-gateway)
     - [Use a custom radio configuration](#use-a-custom-radio-configuration)
     - [Running with less privileges](#running-with-less-privileges)
+    - [Whitelisting](#whitelisting)
     - [Connect to a concentrator remotely](#connect-to-a-concentrator-remotely)
-    - [Register your gateway to The Things Stack](#register-your-gateway-to-the-things-stack)
 - [Troubleshoothing](#troubleshoothing)
 
 ## Introduction
@@ -237,6 +237,8 @@ Variable Name | Value | Description | Default
 **`GPS_LATITUDE`** | `DOUBLE` | Report this latitude for the gateway | 
 **`GPS_LONGITUDE`** | `DOUBLE` | Report this longitude for the gateway | 
 **`GPS_ALTITUDE`** | `DOUBLE` | Report this altitude for the gateway | 
+**`WHITELIST_NETIDS`** | `STRING` | List of NetIDs to whitelist, filters uplinks | *empty*
+**`WHITELIST_OUIS`** | `STRING` | List of OUIs to whitelist, filters join requests | *empty*
 **`TTN_REGION`** | **Deprecated** | Use TTS_REGION instead |
 **`GATEWAY_EUI_NIC`** | **Deprecated** | Use GATEWAY_EUI_SOURCE instead |
 **`RADIO_DEV`** | **Deprecated** | Use DEVICE instead |
@@ -427,6 +429,50 @@ services:
 ```
 
 For a USB concentrator you would mount the USB port instead of the SPI port and you won't need to mount the `/sys` volume, but remember to set `RESET_GPIO` to 0 to avoid unwanted errors in the logs.
+
+### Whitelisting
+
+From version 2.4.2, the service supports message filtering via white lists. There are two whitelists: by NetID and by OUI.
+
+To filter only devices belonging to your network you can add the NetID of your LNS to the `WHITELIST_NETIDS` setting. More than one NetID can be added (comman or space separated). They can also be added in decimal (TTN is 19) or hexadecimal with leading `0x` (TTN is 0x000013). If `WHITELIST_NETIDS` is nt set or empty, no filtering happens. 
+
+The example below filters out all messages from devices not belonging to TTN/TTI:
+
+```
+version: '2.0'
+
+services:
+
+  udp-packet-forwarder:
+    image: rakwireless/udp-packet-forwarder:latest
+    container_name: udp-packet-forwarder
+    restart: unless-stopped
+    privileged: true
+    network_mode: host
+    environment:
+      MODEL: "RAK5146"
+      GATEWAY_EUI: "E45F01FFFE517BA8"
+      WHITELIST_NETIDS: "0x000013"
+```
+
+The NetID is identified by the device address (devAdrr). But if the device has not yet joined the network it does not have a DevAddr. If you want to filter join requests from unknown devices you can do so filtering by OUI. OUI, or Organizational Unique Identifier, are the first 3 bytes of the DevEUI and identfies the manufacturer. To accept join requests from certain devices you can add the OUI of their manufacturer to the `WHITELIST_OUIS` variable like in the eample below:
+
+```
+version: '2.0'
+
+services:
+
+  udp-packet-forwarder:
+    image: rakwireless/udp-packet-forwarder:latest
+    container_name: udp-packet-forwarder
+    restart: unless-stopped
+    privileged: true
+    network_mode: host
+    environment:
+      MODEL: "RAK5146"
+      GATEWAY_EUI: "E45F01FFFE517BA8"
+      WHITELIST_OUIS: "0xA81758"
+```
 
 ### Connect to a concentrator remotely
 

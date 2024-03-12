@@ -101,6 +101,16 @@ services:
       #GPS_LONGITUDE: 2.12
       #GPS_ALTITUDE: 0
 
+      # If the WHITELIST_NETIDS list is not empty, only uplinks from the listed NetID will be allowed.
+      # The list can be comma or space separated. NetIDs are 3 bytes long and can be in decimal or hex (starting with 0x).
+      #WHITELIST_NETIDS: 19,0xC00071
+      
+      # If the WHITELIST_OUIS list is not empty, only join requests from devices by the listed OUI will be allowed.
+      # The OUI of the device is represented by the first 3 bytes of the DevEUI.
+      # The list can be comma or space separated. OUIs are 3 bytes long and can be in decimal or hex (starting with 0x).
+      #WHITELIST_OUIS: 0x75B3D5
+
+
 
 
 

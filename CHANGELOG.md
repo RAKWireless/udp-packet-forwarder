@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.4.2 (Unreleased)
+
+* Option to filter uplinks and join requests using whitelists
+
 ## 2.4.1 (2024-03-01)
 
 * Fixed bug in SERVER_HOST setting
