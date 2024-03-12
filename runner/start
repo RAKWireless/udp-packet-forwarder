@@ -580,6 +580,24 @@ if [[ "${GPS_LATITUDE}" != "" ]] && [[ "${GPS_LONGITUDE}" != "" ]]; then
 fi
 
 # -----------------------------------------------------------------------------
+# Whitelists
+# -----------------------------------------------------------------------------
+
+IFS=', ' read -r -a WHITELIST_NETIDS_ARRAY <<< "${WHITELIST_NETIDS:-} "
+WHITELIST_NETIDS=""
+for NETID in "${WHITELIST_NETIDS_ARRAY[@]}"; do
+    WHITELIST_NETIDS+=$( printf "0x%06X " "$NETID" )
+done
+WHITELIST_NETIDS=$( echo "${WHITELIST_NETIDS}" | xargs )
+
+IFS=', ' read -r -a WHITELIST_OUIS_ARRAY <<< "${WHITELIST_OUIS:-} "
+WHITELIST_OUIS=""
+for OUI in "${WHITELIST_OUIS_ARRAY[@]}"; do
+    WHITELIST_OUIS+=$( printf "0x%06X " "$OUI" )
+done
+WHITELIST_OUIS=$( echo "${WHITELIST_OUIS}" | xargs )
+
+# -----------------------------------------------------------------------------
 # Debug
 # -----------------------------------------------------------------------------
 
@@ -606,6 +624,12 @@ echo -e "${COLOR_INFO}Server:        ${SERVER_HOST}:${SERVER_PORT}${COLOR_END}"
 echo -e "${COLOR_INFO}Band:          ${BAND}${COLOR_END}"
 echo -e "${COLOR_INFO}Gateway EUI:   ${GATEWAY_EUI}${COLOR_END}"
 echo -e "${COLOR_INFO}EUI Source:    ${GATEWAY_EUI_SOURCE}${COLOR_END}"
+if [[ "${WHITELIST_NETIDS}" != "" ]]; then
+echo -e "${COLOR_INFO}NetIDs:        ${WHITELIST_NETIDS// /,}${COLOR_END}"
+fi
+if [[ "${WHITELIST_OUIS}" != "" ]]; then
+echo -e "${COLOR_INFO}OUIs:          ${WHITELIST_OUIS// /,}${COLOR_END}"
+fi
 
 echo -e ""
 
@@ -684,6 +708,13 @@ for CONFIG_FILE in $GLOBAL_CONFIG_FILE $LOCAL_CONFIG_FILE; do
         sed -i "s#\"ref_latitude\":\s*.*,#\"ref_latitude\": ${GPS_LATITUDE:-0},#" $CONFIG_FILE
         sed -i "s#\"ref_longitude\":\s*.*,#\"ref_longitude\": ${GPS_LONGITUDE:-0},#" $CONFIG_FILE
         sed -i "s#\"ref_altitude\":\s*.*,#\"ref_altitude\": ${GPS_ALTITUDE:-0},#" $CONFIG_FILE
+
+        if [[ "${WHITELIST_NETIDS}" != "" ]]; then
+        sed -i "s#\"whitelist_netids\":\s*.*,#\"whitelist_netids\": [\"${WHITELIST_NETIDS// /\",\"}\"],#" $CONFIG_FILE
+        fi
+        if [[ "${WHITELIST_OUIS}" != "" ]]; then
+        sed -i "s#\"whitelist_ouis\":\s*.*,#\"whitelist_ouis\": [\"${WHITELIST_OUIS// /\",\"}\"],#" $CONFIG_FILE
+        fi
 
     fi
 
