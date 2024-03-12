@@ -1,31 +1,17 @@
-diff --git a/libloragw/src/loragw_hal.c b/libloragw/src/loragw_hal.c
-index fc03b3f..0499bb9 100644
---- a/libloragw/src/loragw_hal.c
-+++ b/libloragw/src/loragw_hal.c
-@@ -167,8 +167,7 @@ int lgw_start(void) {
- 
-     /* Check MCU version (ignore first char of the received version (release/debug) */
-     if (strncmp(gw_info.version + 1, mcu_version_string, sizeof mcu_version_string) != 0) {
--        printf("ERROR: MCU version mismatch (expected:%s, got:%s)\n", mcu_version_string, gw_info.version);
--        return -1;
-+        printf("WARNING: MCU version mismatch (expected:%s, got:%s)\n", mcu_version_string, gw_info.version + 1);
-     }
-     printf("INFO: Concentrator MCU version is %s\n", gw_info.version);
- 
-diff --git a/packet_forwarder/src/lora_pkt_fwd.c b/packet_forwarder/src/lora_pkt_fwd.c
-index bd4f332..aed5c8c 100644
---- a/packet_forwarder/src/lora_pkt_fwd.c
-+++ b/packet_forwarder/src/lora_pkt_fwd.c
-@@ -82,6 +82,8 @@
- 
- #define NB_PKT_MAX      255 /* max number of packets per fetch/send cycle */
+diff --git a/lora_pkt_fwd/src/lora_pkt_fwd.c b/lora_pkt_fwd/src/lora_pkt_fwd.c
+index 2d3918b..4708d46 100644
+--- a/lora_pkt_fwd/src/lora_pkt_fwd.c
++++ b/lora_pkt_fwd/src/lora_pkt_fwd.c
+@@ -92,6 +92,8 @@ License: Revised BSD License, see LICENSE.TXT file include in the project
+ #define MIN_FSK_PREAMB  3 /* minimum FSK preamble length for this application */
+ #define STD_FSK_PREAMB  5
  
 +#define WHITELIST_SIZE  16
 +
  #define STATUS_SIZE     200
  #define TX_BUFF_SIZE    ((540 * NB_PKT_MAX) + 30 + STATUS_SIZE)
- #define ACK_BUFF_SIZE   64
-@@ -154,6 +156,12 @@ static pthread_mutex_t mx_stat_rep = PTHREAD_MUTEX_INITIALIZER; /* control acces
+ 
+@@ -183,6 +185,12 @@ static pthread_mutex_t mx_stat_rep = PTHREAD_MUTEX_INITIALIZER; /* control acces
  static bool report_ready = false; /* true when there is a new report to send to the server */
  static char status_report[STATUS_SIZE]; /* status report as a JSON object */
  
@@ -38,16 +24,16 @@ index bd4f332..aed5c8c 100644
  /* auto-quit function */
  static uint32_t autoquit_threshold = 0; /* enable auto-quit after a number of non-acknowledged PULL_DATA (0 = disabled)*/
  
-@@ -187,6 +195,8 @@ static int parse_gateway_configuration(const char * conf_file);
+@@ -208,6 +216,8 @@ static int parse_gateway_configuration(const char * conf_file);
  
  static double difftimespec(struct timespec end, struct timespec beginning);
  
 +static uint32_t get_netid(uint32_t devaddr);
 +
- static void print_nb_pkt_stats(void);
- 
  /* threads */
-@@ -519,6 +529,32 @@ static int parse_gateway_configuration(const char * conf_file) {
+ void thread_up(void);
+ void thread_down(void);
+@@ -704,6 +714,32 @@ static int parse_gateway_configuration(const char * conf_file) {
          MSG("INFO: Auto-quit after %u non-acknowledged PULL_DATA\n", autoquit_threshold);
      }
  
@@ -80,38 +66,40 @@ index bd4f332..aed5c8c 100644
      /* free JSON parsing data structure */
      json_value_free(root_val);
      return 0;
-@@ -1150,20 +1186,12 @@ void thread_up(void) {
+@@ -1308,15 +1344,12 @@ void thread_up(void) {
          for (i = 0; i < nb_pkt; ++i) {
              p = &rxpkt[i];
  
 -            /* Get mote information from current packet (addr, fcnt) */
 -            /* FHDR - DevAddr */
--            if (p->size >= 8) {
--                mote_addr  = p->payload[1];
--                mote_addr |= p->payload[2] << 8;
--                mote_addr |= p->payload[3] << 16;
--                mote_addr |= p->payload[4] << 24;
--                /* FHDR - FCnt */
--                mote_fcnt  = p->payload[6];
--                mote_fcnt |= p->payload[7] << 8;
--            } else {
--                mote_addr = 0;
--                mote_fcnt = 0;
+-            mote_addr  = p->payload[1];
+-            mote_addr |= p->payload[2] << 8;
+-            mote_addr |= p->payload[3] << 16;
+-            mote_addr |= p->payload[4] << 24;
+-            /* FHDR - FCnt */
+-            mote_fcnt  = p->payload[6];
+-            mote_fcnt |= p->payload[7] << 8;
 +            /* Payload debug info */
 +            printf("INFO: [up] payload (%d bytes): ", p->size);
 +            for (uint8_t i=0; i<p->size; i++) {
 +                printf("%02X", p->payload[i]);
-             }
++            }
 +            printf("\n");
  
              /* basic packet filtering */
              pthread_mutex_lock(&mx_meas_up);
-@@ -1199,7 +1227,80 @@ void thread_up(void) {
-             meas_up_pkt_fwd += 1;
+@@ -1324,7 +1357,6 @@ void thread_up(void) {
+             switch(p->status) {
+                 case STAT_CRC_OK:
+                     meas_nb_rx_ok += 1;
+-                    printf( "\nINFO: Received pkt from mote: %08X (fcnt=%u)\n", mote_addr, mote_fcnt );
+                     if (!fwd_valid_pkt) {
+                         pthread_mutex_unlock(&mx_meas_up);
+                         continue; /* skip that packet */
+@@ -1354,6 +1386,80 @@ void thread_up(void) {
              meas_up_payload_byte += p->size;
              pthread_mutex_unlock(&mx_meas_up);
--            printf( "\nINFO: Received pkt from mote: %08X (fcnt=%u)\n", mote_addr, mote_fcnt );
-+
+ 
 +
 +            /* Type of message 
 +            *   0: Join-Request
@@ -185,10 +173,11 @@ index bd4f332..aed5c8c 100644
 +                
 +            }
 +            
- 
++
              /* Start of packet, add inter-packet separator if necessary */
              if (pkt_in_dgram == 0) {
-@@ -1454,6 +1555,20 @@ void thread_up(void) {
+                 buff_up[buff_index] = '{';
+@@ -1617,6 +1723,20 @@ void thread_up(void) {
      MSG("\nINFO: End of upstream thread\n");
  }
  

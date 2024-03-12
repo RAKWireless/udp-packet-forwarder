@@ -3911,7 +3911,7 @@ index 0000000..f250433
 +
 +/* --- EOF ------------------------------------------------------------------ */
 diff --git a/packet_forwarder/src/lora_pkt_fwd.c b/packet_forwarder/src/lora_pkt_fwd.c
-index 53661de..05ce9f0 100644
+index 53661de..fe64e31 100644
 --- a/packet_forwarder/src/lora_pkt_fwd.c
 +++ b/packet_forwarder/src/lora_pkt_fwd.c
 @@ -72,6 +72,7 @@ License: Revised BSD License, see LICENSE.TXT file include in the project
@@ -3922,7 +3922,71 @@ index 53661de..05ce9f0 100644
  
  #define DEFAULT_SERVER      127.0.0.1   /* hostname also supported */
  #define DEFAULT_PORT_UP     1780
-@@ -1431,6 +1432,8 @@ int main(int argc, char ** argv)
+@@ -104,6 +105,8 @@ License: Revised BSD License, see LICENSE.TXT file include in the project
+ #define MIN_FSK_PREAMB  3 /* minimum FSK preamble length for this application */
+ #define STD_FSK_PREAMB  5
+ 
++#define WHITELIST_SIZE  16
++
+ #define STATUS_SIZE     200
+ #define TX_BUFF_SIZE    ((540 * NB_PKT_MAX) + 30 + STATUS_SIZE)
+ #define ACK_BUFF_SIZE   64
+@@ -235,6 +238,12 @@ static uint32_t beacon_bw_hz = DEFAULT_BEACON_BW_HZ; /* set beacon bandwidth, in
+ static int8_t beacon_power = DEFAULT_BEACON_POWER; /* set beacon TX power, in dBm */
+ static uint8_t beacon_infodesc = DEFAULT_BEACON_INFODESC; /* set beacon information descriptor */
+ 
++/* whitelists */
++static uint8_t whitelist_netids_count = 0;
++static uint32_t whitelist_netids[WHITELIST_SIZE];
++static uint8_t whitelist_ouis_count = 0;
++static uint32_t whitelist_ouis[WHITELIST_SIZE];
++
+ /* auto-quit function */
+ static uint32_t autoquit_threshold = 0; /* enable auto-quit after a number of non-acknowledged PULL_DATA (0 = disabled)*/
+ 
+@@ -292,6 +301,8 @@ static void gps_process_coords(void);
+ 
+ static int get_tx_gain_lut_index(uint8_t rf_chain, int8_t rf_power, uint8_t * lut_index);
+ 
++static uint32_t get_netid(uint32_t devaddr);
++
+ /* threads */
+ void thread_up(void);
+ void thread_down(void);
+@@ -1204,6 +1215,32 @@ static int parse_gateway_configuration(const char * conf_file) {
+         MSG("INFO: Auto-quit after %u non-acknowledged PULL_DATA\n", autoquit_threshold);
+     }
+ 
++    /* Whitelist Net IDs */
++    JSON_Array * conf_whitelist_netids_array = json_object_get_array(conf_obj, "whitelist_netids");
++    if (conf_whitelist_netids_array != NULL) {
++        whitelist_netids_count = json_array_get_count(conf_whitelist_netids_array);
++        for (uint8_t i = 0; i < whitelist_netids_count; i++) {
++            str = json_array_get_string(conf_whitelist_netids_array, i);
++            if (str != NULL) {
++                whitelist_netids[i] = ((int) strtol(str, NULL, 0)) & 0x00FFFFFF;
++                MSG("INFO: Whitelisted NetID: 0x%06X\n", whitelist_netids[i]);
++            }
++        }
++    }
++
++    /* Whitelist OUIs */
++    JSON_Array * conf_whitelist_ouis_array = json_object_get_array(conf_obj, "whitelist_ouis");
++    if (conf_whitelist_ouis_array != NULL) {
++        whitelist_ouis_count = json_array_get_count(conf_whitelist_ouis_array);
++        for (uint8_t i = 0; i < whitelist_ouis_count; i++) {
++            str = json_array_get_string(conf_whitelist_ouis_array, i);
++            if (str != NULL) {
++                whitelist_ouis[i] = ((int) strtol(str, NULL, 0)) & 0x00FFFFFF;
++                MSG("INFO: Whitelisted OUI: 0x%06X\n", whitelist_ouis[i]);
++            }
++        }
++    }
++
+     /* free JSON parsing data structure */
+     json_value_free(root_val);
+     return 0;
+@@ -1431,6 +1468,8 @@ int main(int argc, char ** argv)
      /* configuration file related */
      const char defaut_conf_fname[] = JSON_CONF_DEFAULT;
      const char * conf_fname = defaut_conf_fname; /* pointer to a string we won't touch */
@@ -3931,7 +3995,7 @@ index 53661de..05ce9f0 100644
  
      /* threads */
      pthread_t thrid_up;
-@@ -1545,6 +1548,17 @@ int main(int argc, char ** argv)
+@@ -1545,6 +1584,17 @@ int main(int argc, char ** argv)
          MSG("ERROR: [main] failed to find any configuration file named %s\n", conf_fname);
          exit(EXIT_FAILURE);
      }
@@ -3949,7 +4013,7 @@ index 53661de..05ce9f0 100644
  
      /* Start GPS a.s.a.p., to allow it to lock */
      if (gps_tty_path[0] != '\0') { /* do not try to open GPS device if no path set */
-@@ -1874,11 +1888,6 @@ int main(int argc, char ** argv)
+@@ -1874,11 +1924,6 @@ int main(int argc, char ** argv)
          pthread_mutex_lock(&mx_concent);
          i = lgw_get_temperature(&temperature);
          pthread_mutex_unlock(&mx_concent);
@@ -3961,7 +4025,137 @@ index 53661de..05ce9f0 100644
          printf("##### END #####\n");
  
          /* generate a JSON report (will be sent to server by upstream thread) */
-@@ -3334,6 +3343,51 @@ void thread_jit(void) {
+@@ -2058,20 +2103,12 @@ void thread_up(void) {
+         for (i = 0; i < nb_pkt; ++i) {
+             p = &rxpkt[i];
+ 
+-            /* Get mote information from current packet (addr, fcnt) */
+-            /* FHDR - DevAddr */
+-            if (p->size >= 8) {
+-                mote_addr  = p->payload[1];
+-                mote_addr |= p->payload[2] << 8;
+-                mote_addr |= p->payload[3] << 16;
+-                mote_addr |= p->payload[4] << 24;
+-                /* FHDR - FCnt */
+-                mote_fcnt  = p->payload[6];
+-                mote_fcnt |= p->payload[7] << 8;
+-            } else {
+-                mote_addr = 0;
+-                mote_fcnt = 0;
++            /* Payload debug info */
++            printf("INFO: [up] payload (%d bytes): ", p->size);
++            for (uint8_t i=0; i<p->size; i++) {
++                printf("%02X", p->payload[i]);
+             }
++            printf("\n");
+ 
+             /* basic packet filtering */
+             pthread_mutex_lock(&mx_meas_up);
+@@ -2107,7 +2144,80 @@ void thread_up(void) {
+             meas_up_pkt_fwd += 1;
+             meas_up_payload_byte += p->size;
+             pthread_mutex_unlock(&mx_meas_up);
+-            printf( "\nINFO: Received pkt from mote: %08X (fcnt=%u)\n", mote_addr, mote_fcnt );
++
++
++            /* Type of message 
++            *   0: Join-Request
++            *   1: Join-Accept
++            *   2: Unconfirmed Data Uplink
++            *   3: Unconfirmed Data Downlink
++            *   4: Confirmed Data Uplink
++            *   5: Confirmed Data Downlink
++            *   6: RFU
++            *   7: Propietary
++            */
++            uint8_t fType = p->payload[0] >> 5;
++
++            /* Filter JOINs */
++            if (0 == fType) {
++                
++                uint32_t deveui_h = 0;
++                uint32_t deveui_l = 0;
++                deveui_l  = p->payload[ 9];
++                deveui_l |= p->payload[10] << 8;
++                deveui_l |= p->payload[11] << 16;
++                deveui_l |= p->payload[12] << 24;
++                deveui_h  = p->payload[13];
++                deveui_h |= p->payload[14] << 8;
++                deveui_h |= p->payload[15] << 16;
++                deveui_h |= p->payload[16] << 24;
++
++                printf("INFO: [up] Join-Request from %08X%08X\n", deveui_h, deveui_l);
++                u_int32_t oui = deveui_h >> 8;
++                
++                bool found = (whitelist_ouis_count == 0);
++                for (uint8_t i=0; i<whitelist_ouis_count; i++) {
++                    if (oui == whitelist_ouis[i]) {
++                        found = true;
++                        break;
++                    }
++                }
++                if (!found) {
++                    printf("INFO: [up] OUI %06X not in the whitelist, filter out Join Request\n", oui);
++                    continue; /* skip that packet */
++                }
++
++            } else if (p->size >= 8) {
++
++                mote_addr  = p->payload[1];
++                mote_addr |= p->payload[2] << 8;
++                mote_addr |= p->payload[3] << 16;
++                mote_addr |= p->payload[4] << 24;
++                mote_fcnt  = p->payload[6];
++                mote_fcnt |= p->payload[7] << 8;
++
++                uint32_t netid = get_netid(mote_addr);
++                printf( "INFO: [up] pkt from mote: 0x%08X (netid=0x%06X, fcnt=%u)\n", mote_addr, netid, mote_fcnt );
++
++                bool found = (whitelist_netids_count == 0);
++                for (uint8_t i=0; i<whitelist_netids_count; i++) {
++                    if (netid == whitelist_netids[i]) {
++                        found = true;
++                        break;
++                    }
++                }
++                if (!found) {
++                    printf("INFO: [up] NetID %06X not in the whitelist, skipping packet\n", netid);
++                    continue; /* skip that packet */
++                }
++
++            } else {
++
++                mote_addr = 0;
++                mote_fcnt = 0;
++                
++            }
++            
+ 
+             /* Start of packet, add inter-packet separator if necessary */
+             if (pkt_in_dgram == 0) {
+@@ -2529,6 +2639,21 @@ static int get_tx_gain_lut_index(uint8_t rf_chain, int8_t rf_power, uint8_t * lu
+     return 0;
+ }
+ 
++static uint32_t get_netid(uint32_t devaddr) {
++
++    uint8_t nwkid_bits_array[] = { 6, 6, 9, 11, 12, 13, 15, 17 };
++    uint8_t type_id = __builtin_clz(~devaddr);
++    if (type_id > 7) return 0;
++
++    uint8_t nwkid_bits = nwkid_bits_array[type_id];
++    uint32_t nwkid = devaddr >> (31 - type_id - nwkid_bits);
++    nwkid &= ((1 << nwkid_bits) - 1);
++
++    return (type_id << 21) | nwkid;
++
++}
++
++
+ void thread_down(void) {
+     int i; /* loop variables */
+ 
+@@ -3334,6 +3459,51 @@ void thread_jit(void) {
      MSG("\nINFO: End of JIT thread\n");
  }
  
@@ -4013,7 +4207,7 @@ index 53661de..05ce9f0 100644
  /* -------------------------------------------------------------------------- */
  /* --- THREAD 4: PARSE GPS MESSAGE AND KEEP GATEWAY IN SYNC ----------------- */
  
-@@ -3345,7 +3399,7 @@ static void gps_process_sync(void) {
+@@ -3345,7 +3515,7 @@ static void gps_process_sync(void) {
  
      /* get GPS time for synchronization */
      if (i != LGW_GPS_SUCCESS) {
@@ -4022,7 +4216,7 @@ index 53661de..05ce9f0 100644
          return;
      }
  
-@@ -3361,6 +3415,7 @@ static void gps_process_sync(void) {
+@@ -3361,6 +3531,7 @@ static void gps_process_sync(void) {
      /* try to update time reference with the new GPS time & timestamp */
      pthread_mutex_lock(&mx_timeref);
      i = lgw_gps_sync(&time_reference_gps, trig_tstamp, utc, gps_time);
@@ -4030,7 +4224,7 @@ index 53661de..05ce9f0 100644
      pthread_mutex_unlock(&mx_timeref);
      if (i != LGW_GPS_SUCCESS) {
          MSG("WARNING: [gps] GPS out of sync, keeping previous time reference\n");
-@@ -3404,7 +3459,7 @@ void thread_gps(void) {
+@@ -3404,7 +3575,7 @@ void thread_gps(void) {
          /* blocking non-canonical read on serial port */
          ssize_t nb_char = read(gps_tty_fd, serial_buff + wr_idx, LGW_GPS_MIN_MSG_SIZE);
          if (nb_char <= 0) {
