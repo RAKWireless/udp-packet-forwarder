@@ -453,11 +453,9 @@ export LORAGW_SPI=$DEVICE
 # -----------------------------------------------------------------------------
 
 # Set default SPI speed and clock source for SX1301 and SX1308 concentrators to 2MHz and radio_1
-if [[ "${INTERFACE}" == "SPI" ]]; then
-    if [[ "${CONCENTRATOR}" == "SX1301" ]] || [[ "${CONCENTRATOR}" == "SX1308" ]]; then
-        SPI_SPEED=${SPI_SPEED:-2000000}
-        CLKSRC=${CLKSRC:-1}
-    fi
+if [[ "${CONCENTRATOR}" == "SX1301" ]] || [[ "${CONCENTRATOR}" == "SX1308" ]]; then
+    SPI_SPEED=${SPI_SPEED:-2000000}
+    CLKSRC=${CLKSRC:-1}
 fi
 
 export LORAGW_SPI_SPEED=${SPI_SPEED:-8000000}
@@ -688,6 +686,7 @@ for CONFIG_FILE in $GLOBAL_CONFIG_FILE $LOCAL_CONFIG_FILE; do
     fi
 
 done
+
 # Setup libraries and USB rules
 ldconfig
 udevadm control --reload-rules && udevadm trigger
