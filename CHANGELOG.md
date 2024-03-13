@@ -1,5 +1,10 @@
 # Changelog
 
+
+## 2.4.2 (Unreleased)
+
+* Fixed CLKSRC for USB SX1301 concentrators
+
 ## 2.4.1 (2024-03-01)
 
 * Fixed bug in SERVER_HOST setting
