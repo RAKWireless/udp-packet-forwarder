@@ -1,6 +1,6 @@
 # Changelog
 
-## 2.4.2 (Unreleased)
+## 2.4.2 (2024-03-13)
 
 * Option to filter uplinks and join requests using whitelists
 * Fixed CLKSRC for USB SX1301 concentrators
