@@ -37,6 +37,8 @@
         "server_address": "localhost",
         "serv_port_up": 1700,
         "serv_port_down": 1700,
+        "whitelist_netids": [ ],
+        "whitelist_ouis": [],
         
         "keepalive_interval": 10,
         "stat_interval": 30,

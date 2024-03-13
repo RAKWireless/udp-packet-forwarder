@@ -719,6 +719,7 @@ for CONFIG_FILE in $GLOBAL_CONFIG_FILE $LOCAL_CONFIG_FILE; do
     fi
 
 done
+
 # Setup libraries and USB rules
 ldconfig
 udevadm control --reload-rules && udevadm trigger
@@ -731,6 +732,6 @@ udevadm control --reload-rules && udevadm trigger
 
 OPTIONS=""
 if [[ "${DESIGN}" == "picocell" ]]; then
-    OPTIONS=" -d $DEVICE"
+    OPTIONS="-d $DEVICE"
 fi 
-stdbuf -oL /app/artifacts/${DESIGN}/lora_pkt_fwd $OPTIONS
+stdbuf -oL "/app/artifacts/${DESIGN}/lora_pkt_fwd" "$OPTIONS"

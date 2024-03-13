@@ -93,6 +93,7 @@ popd > /dev/null
 clone_patch_and_make https://github.com/Lora-net/packet_forwarder.git v4.0.1
 mkdir -p artifacts/v2/native
 cp packet_forwarder/lora_pkt_fwd/lora_pkt_fwd artifacts/v2/native/
+rm -rf lora_gateway packet_forwarder
 
 # -----------------------------------------------------------------------------
 # Building packet forwarder for V2 in FTDI (USB) mode
@@ -108,6 +109,7 @@ clone_patch_and_make https://github.com/Lora-net/packet_forwarder.git v4.0.1
 mkdir -p artifacts/v2/ftdi
 cp packet_forwarder/lora_pkt_fwd/lora_pkt_fwd artifacts/v2/ftdi/
 cp lora_gateway/libloragw/99-libftdi.rules artifacts/v2/ftdi/
+rm -rf lora_gateway packet_forwarder
 
 # -----------------------------------------------------------------------------
 # Building packet forwarder for Corecells
@@ -118,6 +120,7 @@ clone_patch_and_make https://github.com/Lora-net/sx1302_hal.git V2.1.0
 mkdir -p artifacts/corecell
 cp sx1302_hal/packet_forwarder/lora_pkt_fwd artifacts/corecell/
 cp sx1302_hal/util_chip_id/chip_id artifacts/corecell/
+rm -rf sx1302_hal
 
 # -----------------------------------------------------------------------------
 # Building packet forwarder for Picocells
@@ -129,6 +132,7 @@ clone_patch_and_make https://github.com/Lora-net/picoGW_packet_forwarder.git V0.
 mkdir -p artifacts/picocell
 cp picoGW_packet_forwarder/lora_pkt_fwd/lora_pkt_fwd artifacts/picocell/
 cp picoGW_hal/util_chip_id/util_chip_id artifacts/picocell/chip_id
+rm -rf picoGW_packet_forwarder picoGW_hal
 
 # -----------------------------------------------------------------------------
 # Building packet forwarder for designs based on SX1280
@@ -139,3 +143,4 @@ clone_patch_and_make https://github.com/Lora-net/gateway_2g4_hal V1.1.0
 mkdir -p artifacts/2g4
 cp gateway_2g4_hal/packet_forwarder/lora_pkt_fwd artifacts/2g4/
 cp gateway_2g4_hal/util_chip_id/chip_id artifacts/2g4/
+rm -rf gateway_2g4_hal
