@@ -4,6 +4,7 @@
 
 * Option to filter uplinks and join requests using whitelists
 * Fixed CLKSRC for USB SX1301 concentrators
+* Fixed device argument for picocell concentrators
 
 ## 2.4.1 (2024-03-01)
 
