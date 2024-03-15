@@ -114,7 +114,7 @@ elif [[ "$GATEWAY_EUI_SOURCE" == "chip" ]]; then
 
 elif [[ -n "$GATEWAY_EUI" ]]; then
 
-    echo "Gateway EUI: ${GATEWAY_EUI^^} (based on configuration)"
+    echo "Gateway EUI: ${GATEWAY_EUI^^} (based on environment variable)"
 
 else
 

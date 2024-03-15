@@ -245,7 +245,7 @@ Variable Name | Value | Description | Default
 
 Notes: 
 
-> No setting is mandatory but at least `MODEL` and `DEVICE` must be defined for better performance. The service can auto-discover the concentrator but this feature takes some time on boot to walk through all the possible devices, designs and interfaces.
+> No setting is mandatory but at least `MODEL` and `DEVICE` must be defined for better performance. The service can auto-discover the concentrator but this feature takes some time on boot to walk through all the possible devices, designs and interfaces. Mind that not all concentrator types support auto-discover, defining a `MODEL` and `DEVICE` is mandatory for SX1301-concentrators.
 
 > The list of supported modules is at the top of this page (either RAK Wisgate Developer model numbers or RAK WisLink modules). If your device is not in the list you can manually define `DESIGN`, `INTERFACE`, `GPS_DEV`, `HAS_LTE` and `RESET_GPIO`.
 
