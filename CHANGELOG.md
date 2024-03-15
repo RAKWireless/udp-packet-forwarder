@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.4.3 (Unreleased)
+
+* Support for auto-discover for Picocell concentrators
+* General clean up of the code
+
 ## 2.4.2 (2024-03-13)
 
 * Option to filter uplinks and join requests using whitelists

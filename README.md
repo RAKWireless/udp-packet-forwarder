@@ -245,7 +245,7 @@ Variable Name | Value | Description | Default
 
 Notes: 
 
-> At least `MODEL` must be defined for better performance. The service can auto-discover the concentrator but this feature takes some time on boot to walk through all the possible devices, designs and interfaces.
+> No setting is mandatory but at least `MODEL` and `DEVICE` must be defined for better performance. The service can auto-discover the concentrator but this feature takes some time on boot to walk through all the possible devices, designs and interfaces.
 
 > The list of supported modules is at the top of this page (either RAK Wisgate Developer model numbers or RAK WisLink modules). If your device is not in the list you can manually define `DESIGN`, `INTERFACE`, `GPS_DEV`, `HAS_LTE` and `RESET_GPIO`.
 
@@ -259,11 +259,14 @@ Notes:
 
 ### Auto-discover
 
-The auto-discover feature is capable of finding connected concentrators to SPI and USB ports as long as they are Corecell or 2g4 ones (SX1302, SX1303 and SX1280-based). You can enable this feature by setting the `DEVICE` variable to `AUTO`. 
-
-*Note: up-front auto-discover does not work properly with PicoCell concentrators yet. You can still use the `find_concentrator` script, thou.*
+The auto-discover feature is capable of finding connected concentrators to SPI and USB ports as long as they are Corecell, Picocell or 2g4 ones (SX1302, SX1303, SX1308 and SX1280-based). 
 
 This feature walks the corresponding interfaces until it finds the required concentrator and then resets the `DEVICE` and `INTERFACE` variables accordingly. Doing so takes some time on boot (up to 3 seconds for each device it checks), if you want to speed up the boot process you can set the `DEVICE` explicitly after looking for it with the `find_concentrator` utility (see `Find the concentrator` section below).
+
+Auto-discovery is triggered in different situations:
+
+* No `MODEL` defined or set to `AUTO`: It will search for a concentrator on all interfaces. Interfaces to check can be narrow by using the `INTERFACE` setting. Also the concentrator type to search for can be specified using the `DESIGN` setting (`corecell`, `picocell` or `2g4` are supported).
+* `MODEL` defined but no `DEVICE` or set to `AUTO`:  It will search for the specific concentrator type (based on `MODEL`) on all interfaces. Interfaces to check can be narrow by using the `INTERFACE` setting. 
 
 The following example will start a Corecell concentrator (RAK5146 is based on SX1303) on whatever first interface it finds it (SPI or USB).
 
@@ -280,7 +283,6 @@ services:
     network_mode: host
     environment:
       MODEL: "RAK5146"
-      DEVICE: "AUTO"
 ```
 
 ### Raspberry Pi 5
@@ -337,7 +339,7 @@ The output will be a list of concentrators with the port they are connected to a
 ```
 Looking for devices, this might take some time...
 
-DEVICE            DESIGN      RESPONSE            
+DEVICE            DESIGN      ID            
 --------------------------------------------------
 /dev/spidev0.0    corecell    0016C001FFXXXXXX
 /dev/ttyUSB0      2g4         54112205FFXXXXXX
@@ -352,7 +354,7 @@ DEVICE            DESIGN      RESPONSE
 LoRaWAN gateways are identified with a unique 64 bits (8 bytes) number, called EUI, which can be used to register the gateway on the LoRaWAN Network Server. You can check the gateway EUI (and other data) by inspecting the service logs or running the command below while the container is up (`--network host` is required to get the EUI from the host's NICs):
 
 ```
-docker run -it --network host --rm rakwireless/udp-packet-forwarder:latest gateway_eui
+docker run -it --network host --rm rakwireless/udp-packet-forwarder gateway_eui
 ```
 
 You can do so before bringing up the service, so you first get the EUI, register the gateway and get the KEY to populate it on the `docker-compose.yml` file. If you are specifying a different source to create the EUI from (see the GATEWAY_EUI_SOURCE variable above), you can do it like this:
@@ -368,6 +370,12 @@ docker run -it --privileged --rm -e GATEWAY_EUI_SOURCE=chip rakwireless/udp-pack
 ```
 
 If using balenaCloud the ```EUI``` will be visible as a TAG on the device dashboard. Be careful when you copy the tag, as other characters will be copied.
+
+The output will one or more possible EUIs (if using `GATEWAY_EUI_SOURCE=chip` with more than once concentrator plugged-in):
+
+```
+Gateway EUI: 8045DDFFFE010203 (based on interface wlp2s0)
+```
 
 
 ### Use a custom radio configuration
