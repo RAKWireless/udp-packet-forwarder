@@ -1,5 +1,5 @@
-variable "TAG" { default = "" }
-variable "VERSION" { default = "" }
+variable "TAG" { default = "latest" }
+variable "VERSION" { default = "latest" }
 variable "BUILD_DATE" { default = "" }
 variable "REGISTRY" { default = "rakwireless/udp-packet-forwarder" }
 
@@ -46,6 +46,7 @@ target "amd64" {
     args = {
         "ARCH" = "amd64",
         "TAG" = "${TAG}",
+        "VERSION" = "${VERSION}",
         "BUILD_DATE" = "${BUILD_DATE}"
     }
     platforms = ["linux/amd64"]
