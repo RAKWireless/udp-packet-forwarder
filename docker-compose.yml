@@ -92,6 +92,10 @@ services:
       #HAS_GPS: "0"
       #HAS_LTE: "0"
       
+      # ------------------------------------------------
+      # GPS
+      # ------------------------------------------------
+
       # Same for the GPS
       #GPS_DEV: "/dev/i2c-1"
       #GPS_DEV: "/dev/ttyUSB1"
@@ -100,6 +104,10 @@ services:
       #GPS_LATITUDE: 41.42
       #GPS_LONGITUDE: 2.12
       #GPS_ALTITUDE: 0
+
+      # ------------------------------------------------
+      # Whitelisting
+      # ------------------------------------------------
 
       # If the WHITELIST_NETIDS list is not empty, only uplinks from the listed NetID will be allowed.
       # The list can be comma or space separated. NetIDs are 3 bytes long and can be in decimal or hex (starting with 0x).
@@ -110,7 +118,32 @@ services:
       # The list can be comma or space separated. OUIs are 3 bytes long and can be in decimal or hex (starting with 0x).
       #WHITELIST_OUIS: 0x75B3D5
 
+      # ------------------------------------------------
+      # The Things Industries Autoprovision
+      # ------------------------------------------------
 
+      # Gateway prefix to autogenerate IDs in TTI/TTN (defaults to "eui")
+      #GATEWAY_PREFIX: "project"
+
+      # Gateway ID to use when registering the gateway in TTI/TTN (defaults to "<GATEWAY_PREFIX>-<GATEWAY_EUI>")
+      #GATEWAY_ID: "gw-test-01"
+
+      # Gateway NAME to use when registering the gateway in TTI/TTN (defaults to <GATEWAY_ID>)
+      #GATEWAY_NAME: "gw-test-01"
+
+      # TTS username with privileges to provision a gateway
+      #TTS_USERNAME: "xoseperez"
+
+      # Personal key with privileges to provision a gateway
+      # Required permissions:
+      # * link as Gateway to a Gateway Server for traffic exchange, i.e. write uplink and read downlink
+      # * view and edit gateway API keys
+      # * edit basic gateway settings
+      # * create a gateway under the user account
+      #TTS_PERSONAL_KEY: "NNSXS.NUSV...."
+      
+      # The Things Stack frequency plan (https://www.thethingsindustries.com/docs/reference/frequency-plans/)
+      #TTS_FREQUENCY_PLAN_ID: "EU_863_870_TTN"
 
 
 

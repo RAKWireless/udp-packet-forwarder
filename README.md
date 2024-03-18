@@ -23,8 +23,10 @@ This project deploys a LoRaWAN gateway with UDP Packet Forwarder protocol using 
     - [Use a custom radio configuration](#use-a-custom-radio-configuration)
     - [Running with less privileges](#running-with-less-privileges)
     - [Whitelisting](#whitelisting)
+    - [Autoprovision your gateway on TTN or TTI](#autoprovision-your-gateway-on-ttn-or-tti)
     - [Connect to a concentrator remotely](#connect-to-a-concentrator-remotely)
 - [Troubleshoothing](#troubleshoothing)
+
 
 ## Introduction
 
@@ -239,6 +241,12 @@ Variable Name | Value | Description | Default
 **`GPS_ALTITUDE`** | `DOUBLE` | Report this altitude for the gateway | 
 **`WHITELIST_NETIDS`** | `STRING` | List of NetIDs to whitelist, filters uplinks | *empty*
 **`WHITELIST_OUIS`** | `STRING` | List of OUIs to whitelist, filters join requests | *empty*
+**`GATEWAY_PREFIX`** | `STRING` | Prefix to autogenerate GATEWAY_ID for TTS/TTI/TTN autoprovision | `eui`
+**`GATEWAY_ID`** | `STRING` | ID to use when autoprovisioning the gateway on TTS/TTI/TTN | `GATEWAY_PREFIX` + `-` + `GATEWAY_EUI`
+**`GATEWAY_NAME`** | `STRING` | Name to use when autoprovisioning the gateway on TTS/TTI/TTN | `GATEWAY_ID`
+**`TTS_USERNAME`** | `STRING` | Name of your user on the TTS instance you want to register the gateway | Paste your username
+**`TTS_PERSONAL_KEY`** | `STRING` | Unique key to create the gateway and its key | Paste personal API key from your TTS instance (check section about autoprovision below)
+**`TTS_FREQUENCY_PLAN_ID`** | `STRING` | The Things Stack frequency plan (https://www.thethingsindustries.com/docs/reference/frequency-plans/) | "EU_863_870_TTN"
 **`TTN_REGION`** | **Deprecated** | Use TTS_REGION instead |
 **`GATEWAY_EUI_NIC`** | **Deprecated** | Use GATEWAY_EUI_SOURCE instead |
 **`RADIO_DEV`** | **Deprecated** | Use DEVICE instead |
@@ -481,6 +489,38 @@ services:
       GATEWAY_EUI: "E45F01FFFE517BA8"
       WHITELIST_OUIS: "0xA81758"
 ```
+
+### Autoprovision your gateway on TTN or TTI
+
+These variables you can autoprovision the gateway using the The Things Stack REST API, compatible with The Things Cloud and The Things Cloud Community (TTN): `GATEWAY_PREFIX`, `GATEWAY_ID`, `GATEWAY_NAME`, `TTS_USERNAME`, `TTS_PERSONAL_KEY`, `TTS_FREQUENCY_PLAN_ID`. Only `TTS_USERNAME` and `TTS_PERSONAL_KEY` are mandatory to configure autoprovisioning, the rest have sensible defaults you can use. This is specially useful when deploying a fleet of gateways with the same hardware. You only have to define `TTS_USERNAME` and `TTS_PERSONAL_KEY` at fleet level and the gateways will autoregister and provision the keys to connect to your TTN instance (provided you are using a auto-discover compatible concentrator).
+
+An example `docker-compose.yml` file to autodiscover and autoprovision a gateway to the european server of TTN (that's the default) would be:
+```
+version: '2.0'
+
+services:
+
+  udp-packet-forwarder:
+    image: rakwireless/udp-packet-forwarder:latest
+    container_name: udp-packet-forwarder
+    restart: unless-stopped
+    privileged: true
+    network_mode: host
+    environment:
+      TTS_USERNAME: "xoseperez" # use here your TTN user name
+      TTS_PERSONAL_KEY: "NNSXS.E2CK53N....." # use here a personal key with the required permissions
+```
+
+`TTS_PERSONAL_KEY` should be a key with, at least, the following permissions:
+* link as Gateway to a Gateway Server for traffic exchange, i.e. write uplink and read downlink
+* view and edit gateway API keys
+* edit basic gateway settings
+* create a gateway under the user account
+
+Remember that when using TTN the `GATEWAY_NAME` and `GATEWAY_ID` must be unique over time (including deleted gateways). 
+
+You might want to change the `TTS_REGION` if not using the european server, set `TTS_TENANT` if using a The Things Clound instance or `SERVER` if using a on-premise instance of The Things Stack.
+
 
 ### Connect to a concentrator remotely
 

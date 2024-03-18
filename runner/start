@@ -159,6 +159,54 @@ function get_json_property {
 
 }
 
+function tts_autoprovision() {
+
+    # Autoprovision variables needed
+    TTS_USERNAME=${TTS_USERNAME:-"none"}
+    GATEWAY_PREFIX=${GATEWAY_PREFIX:-"eui"}
+    GATEWAY_ID=${GATEWAY_ID:-"${GATEWAY_PREFIX,,}-${GATEWAY_EUI,,}"}
+    GATEWAY_NAME=${GATEWAY_NAME:-${GATEWAY_ID}}
+    
+    # Autoprovision regions defined here: https://www.thethingsindustries.com/docs/reference/frequency-plans/
+    TTS_FREQUENCY_PLAN_ID=${TTS_FREQUENCY_PLAN_ID:-${BANDS[${BAND}]}}
+
+    local RAW
+    local CODE
+    local MESSAGE
+    RAW=$(curl -s --location \
+        --header 'Accept: application/json' \
+        --header 'Authorization: Bearer '"${TTS_PERSONAL_KEY}"'' \
+        --header 'Content-Type: application/json' \
+        --request POST \
+        --data-raw '{
+            "gateway": {
+            "ids": {
+                "gateway_id": "'"${GATEWAY_ID}"'",
+                "eui": "'"${GATEWAY_EUI}"'"
+            },
+            "name": "'"${GATEWAY_NAME}"'",
+            "gateway_server_address": "'"${SERVER}"'",
+            "frequency_plan_id": "'"${TTS_FREQUENCY_PLAN_ID}"'"
+            }
+        }' \
+        'https://'"${SERVER}"'/api/v3/users/'"${TTS_USERNAME}"'/gateways' 2>/dev/null)
+    
+    CODE=$( echo "${RAW}" | jq --raw-output '.code' 2>/dev/null )
+    MESSAGE=$( echo "${RAW}" | jq --raw-output '.message' 2>/dev/null )
+
+    # ToDo: find more error codes when provision a gateway via API.   
+    if [[ "$CODE" == "null" ]]; then
+        echo -e "${COLOR_INFO}Gateway autoprovisioned successfully!${COLOR_END}"
+    elif [[ "$CODE" == 6 ]] || [[ "$CODE" == 9 ]]; then
+        echo -e "${COLOR_WARNING}WARNING: The gateway was already provisioned.${COLOR_END}"
+    else
+        echo -e "${COLOR_ERROR}ERROR: Autoprovisioning error $MESSAGE ($CODE).${COLOR_END}"
+    fi
+    
+    echo
+
+}
+
 # -----------------------------------------------------------------------------
 # Preparing configuration
 # -----------------------------------------------------------------------------
@@ -335,7 +383,7 @@ declare -A MODEL_MAP=(
 
 CONCENTRATOR=${MODEL_MAP[$MODEL]}
 if [[ -z "${CONCENTRATOR}" ]]; then
-    echo -e "${COLOR_ERROR}ERROR: Unknown MODEL value ($MODEL). Valid values are: ${MODEL_MAP[*]}${COLOR_END}"
+    echo -e "${COLOR_ERROR}ERROR: Unknown MODEL value ($MODEL). Valid values are: ${!MODEL_MAP[*]}${COLOR_END}"
 	idle
 fi
 
@@ -549,9 +597,24 @@ if [ "$BAND" == "as_923_2" ]; then BAND="as_920_923"; fi
 if [ "$BAND" == "as_923_3" ]; then BAND="as_915_921"; fi
 if [ "$BAND" == "as_923_4" ]; then BAND="as_917_920"; fi  
 
-# Check we have a valid BAND
-declare -a BANDS=( as_915_921 as_915_928 as_917_920 as_920_923 au_915_928 cn_470_510 eu_433 eu_863_870 in_865_867 kr_920_923 ru_864_870 us_902_928 global )
-if [[ $( echo "${BANDS[@]}" | grep -c -w "${BAND}" ) -eq 0 ]]; then
+# Existing BANDS
+declare -A BANDS=(
+    [as_915_921]=AS_923_3
+    [as_915_928]=AS_923
+    [as_917_920]=AS_923_4
+    [as_920_923]=AS_920_923
+    [au_915_928]=AU_915_928_FSB_2
+    [cn_470_510]=CN_470_510_FSB_11
+    [eu_433]=EU_433
+    [eu_863_870]=EU_863_870_TTN 
+    [in_865_867]=IN_865_867
+    [kr_920_923]=KR_920_923_TTN
+    [ru_864_870]=RU_864_870_TTN
+    [us_902_928]=US_902_928_FSB_2
+    [global]=ISM_2400_3CH_DRAFT2
+)
+
+if [[ $( echo "${!BANDS[*]}" | grep -c -w "${BAND}" ) -eq 0 ]]; then
     echo -e "${COLOR_ERROR}ERROR: Wrong BAND setting ($BAND).${COLOR_END}"
 	idle
 fi
@@ -679,6 +742,14 @@ echo -e "${COLOR_INFO}Altitude:      ${GPS_ALTITUDE:-0}${COLOR_END}"
 fi 
 
 echo -e ""
+
+# -----------------------------------------------------------------------------
+# TTS auto-provision
+# -----------------------------------------------------------------------------
+
+if [[ -n "$TTS_PERSONAL_KEY" ]] && [[ -n "$TTS_USERNAME"  ]]; then
+    tts_autoprovision
+fi
 
 # -----------------------------------------------------------------------------
 # Push to Balena
