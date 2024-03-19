@@ -1,8 +1,9 @@
 # Changelog
 
-## 2.4.3 (Unreleased)
+## 2.4.3 (2024-03-19)
 
 * Support for auto-discover for Picocell concentrators
+* Auto-provision gateway for TTSv3 (TTN/TTI) and ChirpStackv4
 * General clean up of the code
 
 ## 2.4.2 (2024-03-13)
