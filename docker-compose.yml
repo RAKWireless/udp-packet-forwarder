@@ -119,17 +119,19 @@ services:
       #WHITELIST_OUIS: 0x75B3D5
 
       # ------------------------------------------------
-      # The Things Industries Autoprovision
+      # Gateway Autoprovision
       # ------------------------------------------------
 
-      # Gateway prefix to autogenerate IDs in TTI/TTN (defaults to "eui")
+      # Gateway prefix to autogenerate IDs in TTI/TTN or ChirpStack (defaults to "eui")
       #GATEWAY_PREFIX: "project"
 
-      # Gateway ID to use when registering the gateway in TTI/TTN (defaults to "<GATEWAY_PREFIX>-<GATEWAY_EUI>")
+      # Gateway ID to use when registering the gateway in TTI/TTN or ChirpStack (defaults to "<GATEWAY_PREFIX>-<GATEWAY_EUI>")
       #GATEWAY_ID: "gw-test-01"
 
-      # Gateway NAME to use when registering the gateway in TTI/TTN (defaults to <GATEWAY_ID>)
+      # Gateway NAME to use when registering the gateway in TTI/TTN or ChirpStack (defaults to <GATEWAY_ID>)
       #GATEWAY_NAME: "gw-test-01"
+
+      # ------------------------------------------------
 
       # TTS username with privileges to provision a gateway
       #TTS_USERNAME: "xoseperez"
@@ -145,5 +147,15 @@ services:
       # The Things Stack frequency plan (https://www.thethingsindustries.com/docs/reference/frequency-plans/)
       #TTS_FREQUENCY_PLAN_ID: "EU_863_870_TTN"
 
+      # ------------------------------------------------
 
+      # API URL, defaults to http://<SERVER_HOST>:8090
+      #CS_API_URL: http://localhost:8090
 
+      # Tenant ID to asign the gateway to
+      #CS_TENANT_ID: "6849ca56-aa22-4025-cc65-be6961131589"
+
+      # Token to use the ChirpStack API, must have permissions on the tenant above
+      #CS_TOKEN: "eyJ0eXAiOiJKV1QiLC...."
+
+      # ------------------------------------------------

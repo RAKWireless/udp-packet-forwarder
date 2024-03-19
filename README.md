@@ -23,7 +23,9 @@ This project deploys a LoRaWAN gateway with UDP Packet Forwarder protocol using 
     - [Use a custom radio configuration](#use-a-custom-radio-configuration)
     - [Running with less privileges](#running-with-less-privileges)
     - [Whitelisting](#whitelisting)
-    - [Autoprovision your gateway on TTN or TTI](#autoprovision-your-gateway-on-ttn-or-tti)
+    - [Auto-provision your gateway](#auto-provision-your-gateway)
+        - [Auto-provision your gateway on TTN/TTI](#auto-provision-your-gateway-on-ttntti)
+        - [Auto-provision your gateway on ChirpStack](#auto-provision-your-gateway-on-chirpstack)
     - [Connect to a concentrator remotely](#connect-to-a-concentrator-remotely)
 - [Troubleshoothing](#troubleshoothing)
 
@@ -36,18 +38,19 @@ Main features:
 
 * Support for AMD64 (x86_64), ARMv8, ARMv7 and ARMv6 architectures.
 * Support for SX1301, SX1302, SX1303 and SX1308 concentrators.
-* Support for 2.4GHz LoRa concentrators based on Semtech's reference design (SX1280)
+* Support for 2.4GHz LoRa concentrators based on Semtech's reference design (SX1280).
 * Support for SPI and USB concentrators.
-* Compatible with The Things Stack (Comunity Edition / TTNv3) or Chirpstack LNS amongst others.
-* Almost one click deploy with auto-discover features and at the same time highly configurable.
+* Auto-discover concentrator for Corecell, Picocell and 2g4 concentrators.
+* Compatible with The Things Stack v3 or Chirpstack v4 LNS amongst others.
+* Auto-provision gateway on TTSv3 and ChirpStackv4.
+* Almost one click deploy with auto-provision and auto-discover features and at the same time highly configurable.
 
 This project is available on Docker Hub (https://hub.docker.com/r/rakwireless/udp-packet-forwarder) and GitHub (https://github.com/RAKWireless/udp-packet-forwarder).
 
-This project has been tested with The Things Stack Community Edition (TTSCE or TTNv3).
+This project has been tested with The Things Stack Community Edition (TTSCE / TTNv3) and ChirpStack v4.
 
 
 ## Requirements
-
 
 ### Hardware
 
@@ -95,7 +98,7 @@ Supported RAK LoRa concentrators:
 
 ### Software
 
-You will need docker and docker-compose (optional but recommended) on the machine (see below for instal·lation instructions). You will also need a an account at a LoRaWAN Network Server, for instance a [The Things Stack V3 account](https://console.cloud.thethings.network/).
+You will need docker and docker-compose (optional but recommended) on the machine (see below for instal·lation instructions). You will also need a an account at a LoRaWAN Network Server, for instance a [The Things Network account](https://console.cloud.thethings.network/).
 
 > You can also deploy this using balenaCloud, check the `Deploy with balena` section below.
 
@@ -241,19 +244,22 @@ Variable Name | Value | Description | Default
 **`GPS_ALTITUDE`** | `DOUBLE` | Report this altitude for the gateway | 
 **`WHITELIST_NETIDS`** | `STRING` | List of NetIDs to whitelist, filters uplinks | *empty*
 **`WHITELIST_OUIS`** | `STRING` | List of OUIs to whitelist, filters join requests | *empty*
-**`GATEWAY_PREFIX`** | `STRING` | Prefix to autogenerate GATEWAY_ID for TTS/TTI/TTN autoprovision | `eui`
-**`GATEWAY_ID`** | `STRING` | ID to use when autoprovisioning the gateway on TTS/TTI/TTN | `GATEWAY_PREFIX` + `-` + `GATEWAY_EUI`
-**`GATEWAY_NAME`** | `STRING` | Name to use when autoprovisioning the gateway on TTS/TTI/TTN | `GATEWAY_ID`
+**`GATEWAY_PREFIX`** | `STRING` | Prefix to autogenerate GATEWAY_ID for TTS/TTI/TTN auto-provision | `eui`
+**`GATEWAY_ID`** | `STRING` | ID to use when auto-provisioning the gateway on TTS/TTI/TTN | `GATEWAY_PREFIX` + `-` + `GATEWAY_EUI`
+**`GATEWAY_NAME`** | `STRING` | Name to use when auto-provisioning the gateway on TTS/TTI/TTN | `GATEWAY_ID`
 **`TTS_USERNAME`** | `STRING` | Name of your user on the TTS instance you want to register the gateway | Paste your username
-**`TTS_PERSONAL_KEY`** | `STRING` | Unique key to create the gateway and its key | Paste personal API key from your TTS instance (check section about autoprovision below)
+**`TTS_PERSONAL_KEY`** | `STRING` | Unique key to create the gateway and its key | Paste personal API key from your TTS instance (check section about auto-provision below)
 **`TTS_FREQUENCY_PLAN_ID`** | `STRING` | The Things Stack frequency plan (https://www.thethingsindustries.com/docs/reference/frequency-plans/) | "EU_863_870_TTN"
+**`CS_API_URL`** | `STRING` | ChripStack REST API URL | `http://<SERVER_HOST>:8090`
+**`CS_TENANT_ID`** | `STRING` | ChirpStack tenant UID to register the gateway | *empty*
+**`CS_TOKEN`** | `STRING` | ChirpStack API key with permissions to create a gateway on the tenant above | *empty*
 **`TTN_REGION`** | **Deprecated** | Use TTS_REGION instead |
 **`GATEWAY_EUI_NIC`** | **Deprecated** | Use GATEWAY_EUI_SOURCE instead |
 **`RADIO_DEV`** | **Deprecated** | Use DEVICE instead |
 
 Notes: 
 
-> No setting is mandatory but at least `MODEL` and `DEVICE` must be defined for better performance. The service can auto-discover the concentrator but this feature takes some time on boot to walk through all the possible devices, designs and interfaces. Mind that not all concentrator types support auto-discover, defining a `MODEL` and `DEVICE` is mandatory for SX1301-concentrators.
+> No setting is mandatory but `MODEL` and `DEVICE` are recommended for better performance. The service can auto-discover the concentrator but this feature takes some time on boot to walk through all the possible devices, designs and interfaces. Mind that not all concentrator types support auto-discover, defining a `MODEL` and `DEVICE` is mandatory for SX1301-concentrators.
 
 > The list of supported modules is at the top of this page (either RAK Wisgate Developer model numbers or RAK WisLink modules). If your device is not in the list you can manually define `DESIGN`, `INTERFACE`, `GPS_DEV`, `HAS_LTE` and `RESET_GPIO`.
 
@@ -261,7 +267,7 @@ Notes:
 
 > The `BAND` can be one of these values: `as_915_921(as_923_3)`, `as_915_928(as_915_1)`, `as_917_920(as_923_4)`, `as_920_923(as_923_2)`, `au_915_928`, `cn_470_510`, `eu_433`, `eu_863_870`, `in_865_867`, `kr_920_923`, `ru_864_870`, and `us_902_928`.
 
-> `SERVER_HOST` and `SERVER_PORT` values default to The Things Stack Community Edition european server (`udp://eu1.cloud.thethings.network:1700`). If your region is not EU you can change it using ```TTN_REGION```. At the moment only these regions are available: `eu1`, `nam1` and `au1`.
+> `SERVER_HOST` and `SERVER_PORT` values default to The Things Stack Community Edition european server (`udp://eu1.cloud.thethings.network:1700`). If your region is not EU you can change it using `TTN_REGION`. At the moment only these regions are available: `eu1`, `nam1` and `au1`.
 
 > If you have more than one concentrator on the same device, you will have to set different GATEWAY_EUI for each one and different `DEVICE` values. Setting the `DEVICE` only works with SX1302 and SX1303 concentrators. So you cannot use two SPI SX1301/SX1308 or two USB SX1301/SX1308 concentrators on the same device since they will both try to use the same port. But you can mix USB and SPI SX1301/SX1308 concentrators without problem. You can also provide a custom `global_conf.json` file to customize how every concentrator should behave. Check the `Use a custom radio configuration` section below.
 
@@ -490,11 +496,25 @@ services:
       WHITELIST_OUIS: "0xA81758"
 ```
 
-### Autoprovision your gateway on TTN or TTI
+### Auto-provision your gateway
 
-These variables you can autoprovision the gateway using the The Things Stack REST API, compatible with The Things Cloud and The Things Cloud Community (TTN): `GATEWAY_PREFIX`, `GATEWAY_ID`, `GATEWAY_NAME`, `TTS_USERNAME`, `TTS_PERSONAL_KEY`, `TTS_FREQUENCY_PLAN_ID`. Only `TTS_USERNAME` and `TTS_PERSONAL_KEY` are mandatory to configure autoprovisioning, the rest have sensible defaults you can use. This is specially useful when deploying a fleet of gateways with the same hardware. You only have to define `TTS_USERNAME` and `TTS_PERSONAL_KEY` at fleet level and the gateways will autoregister and provision the keys to connect to your TTN instance (provided you are using a auto-discover compatible concentrator).
+The service lets you auto-provision your gateway on the first boot agains a TTS (The Things Network / The Things Industries) server or a ChirpStack server.
 
-An example `docker-compose.yml` file to autodiscover and autoprovision a gateway to the european server of TTN (that's the default) would be:
+The are some common variables for these options: `GATEWAY_PREFIX`, `GATEWAY_ID`, `GATEWAY_NAME`. These are not mandatory and if not defined the service will choose some sensible defaults.
+
+#### Auto-provision your gateway on TTN/TTI
+
+To configure auto-provisioning using the TTS API, `TTS_USERNAME` and `TTS_PERSONAL_KEY` are mandatory and `TTS_FREQUENCY_PLAN_ID` is optional.
+
+`TTS_PERSONAL_KEY` should be a key with, at least, the following permissions:
+* link as Gateway to a Gateway Server for traffic exchange, i.e. write uplink and read downlink
+* view and edit gateway API keys
+* edit basic gateway settings
+* create a gateway under the user account
+
+Remember that when using TTN the `GATEWAY_NAME` and `GATEWAY_ID` must be unique over time (including deleted gateways). 
+
+An example `docker-compose.yml` file to autodiscover and auto-provision a gateway to the european server of TTN (that's the default) would be:
 ```
 version: '2.0'
 
@@ -511,15 +531,31 @@ services:
       TTS_PERSONAL_KEY: "NNSXS.E2CK53N....." # use here a personal key with the required permissions
 ```
 
-`TTS_PERSONAL_KEY` should be a key with, at least, the following permissions:
-* link as Gateway to a Gateway Server for traffic exchange, i.e. write uplink and read downlink
-* view and edit gateway API keys
-* edit basic gateway settings
-* create a gateway under the user account
-
-Remember that when using TTN the `GATEWAY_NAME` and `GATEWAY_ID` must be unique over time (including deleted gateways). 
-
 You might want to change the `TTS_REGION` if not using the european server, set `TTS_TENANT` if using a The Things Clound instance or `SERVER` if using a on-premise instance of The Things Stack.
+
+#### Auto-provision your gateway on ChirpStack
+
+To configure auto-provisioning using the ChirpStack REST API `CS_TENANT_ID` and `CS_TOKEN` are mandatory and `CS_API_URL` is optional (will default to `http://<SERVER_HOST>:8089`).
+
+`CS_TOKEN` should be a API key created by tenant `CS_TENANT_ID` or and admin. Remember that `GATEWAY_EUI` are unique, the service will show a warning if the gateway already exists on the same ChirpStack instance. 
+
+An example `docker-compose.yml` file to autodiscover and auto-provision a gateway to a local ChirpStack LNS at IP 192.168.200.15 would be:
+```
+version: '2.0'
+
+services:
+
+  udp-packet-forwarder:
+    image: rakwireless/udp-packet-forwarder:latest
+    container_name: udp-packet-forwarder
+    restart: unless-stopped
+    privileged: true
+    network_mode: host
+    environment:
+      SERVER_HOST: 192.168.200.15
+      CS_TENANT_ID: "6849ca56-aa22-4025-cc65-be6961131589"
+      CS_TOKEN: "eyJ0eXAiO..."
+```
 
 
 ### Connect to a concentrator remotely

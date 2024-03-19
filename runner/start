@@ -159,6 +159,49 @@ function get_json_property {
 
 }
 
+function cs_autoprovision() {
+
+    # Autoprovision variables needed
+    GATEWAY_PREFIX=${GATEWAY_PREFIX:-"eui"}
+    GATEWAY_ID=${GATEWAY_ID:-"${GATEWAY_PREFIX,,}-${GATEWAY_EUI,,}"}
+    GATEWAY_NAME=${GATEWAY_NAME:-${GATEWAY_ID}}
+    CS_API_URL=${CS_API_URL:-http://${SERVER_HOST}:8090}
+
+    local RAW
+    local CODE
+    local MESSAGE
+
+    RAW=$(curl --silent --location --insecure \
+        --header 'Accept: application/json' \
+        --header 'Grpc-Metadata-Authorization: Bearer '"${CS_TOKEN}"'' \
+        --header 'Content-Type: application/json' \
+        --request POST \
+        --data-raw '{
+            "gateway": {
+                "gatewayId": "'"${GATEWAY_EUI}"'",
+                "name": "'"${GATEWAY_NAME}"'",
+                "statsInterval": 30,
+                "tenantId": "'"${CS_TENANT_ID}"'"
+            }
+        }' \
+        "${CS_API_URL}"'/api/gateways' 2>/dev/null)
+    
+    if [[ "${RAW}" == "{}" ]]; then
+        echo -e "${COLOR_INFO}Gateway autoprovisioned successfully!${COLOR_END}"
+    else
+        CODE=$( echo "${RAW}" | jq --raw-output '.code' 2>/dev/null )
+        if [[ $CODE -eq 13 ]]; then
+            echo -e "${COLOR_WARNING}WARNING: The gateway was already provisioned.${COLOR_END}"
+        else
+            MESSAGE=$( echo "${RAW}" | jq --raw-output '.message' 2>/dev/null )
+            echo -e "${COLOR_ERROR}ERROR: Autoprovisioning error $MESSAGE ($CODE).${COLOR_END}"
+        fi
+    fi
+
+    echo
+    
+}
+
 function tts_autoprovision() {
 
     # Autoprovision variables needed
@@ -166,14 +209,12 @@ function tts_autoprovision() {
     GATEWAY_PREFIX=${GATEWAY_PREFIX:-"eui"}
     GATEWAY_ID=${GATEWAY_ID:-"${GATEWAY_PREFIX,,}-${GATEWAY_EUI,,}"}
     GATEWAY_NAME=${GATEWAY_NAME:-${GATEWAY_ID}}
-    
-    # Autoprovision regions defined here: https://www.thethingsindustries.com/docs/reference/frequency-plans/
     TTS_FREQUENCY_PLAN_ID=${TTS_FREQUENCY_PLAN_ID:-${BANDS[${BAND}]}}
 
     local RAW
     local CODE
     local MESSAGE
-    RAW=$(curl -s --location \
+    RAW=$(curl --silent --location --insecure \
         --header 'Accept: application/json' \
         --header 'Authorization: Bearer '"${TTS_PERSONAL_KEY}"'' \
         --header 'Content-Type: application/json' \
@@ -598,6 +639,7 @@ if [ "$BAND" == "as_923_3" ]; then BAND="as_915_921"; fi
 if [ "$BAND" == "as_923_4" ]; then BAND="as_917_920"; fi  
 
 # Existing BANDS
+# https://www.thethingsindustries.com/docs/reference/frequency-plans/
 declare -A BANDS=(
     [as_915_921]=AS_923_3
     [as_915_928]=AS_923
@@ -749,6 +791,8 @@ echo -e ""
 
 if [[ -n "$TTS_PERSONAL_KEY" ]] && [[ -n "$TTS_USERNAME"  ]]; then
     tts_autoprovision
+elif [[ -n "$CS_TOKEN" ]] && [[ -n "$CS_TENANT_ID" ]]; then
+    cs_autoprovision
 fi
 
 # -----------------------------------------------------------------------------
