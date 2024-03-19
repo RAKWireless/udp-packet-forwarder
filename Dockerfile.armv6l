@@ -1,7 +1,7 @@
 ARG ARCH=%%BALENA_ARCH%%
 
 # Builder image
-FROM balenalib/${ARCH}-debian:buster-build as builder
+FROM balenalib/armv5e-debian:buster-build as builder
 ARG ARCH
 
 # Install required development packages
@@ -13,10 +13,10 @@ WORKDIR /app
 # Checkout and compile remote code
 COPY ./builder/ ./
 RUN chmod +x build
-RUN ARCH=${ARCH} ./build
+RUN ARCH=armv6l ./build
 
 # Runner image
-FROM balenalib/${ARCH}-debian:buster-run as runner
+FROM balenalib/armv5e-debian:buster-run as runner
 ARG ARCH
 
 # Image metadata
