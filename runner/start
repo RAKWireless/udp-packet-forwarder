@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-VERSION=2.4.3
+VERSION=2.4.4
 
 # -----------------------------------------------------------------------------
 # Colors
@@ -690,6 +690,13 @@ fi
 [[ -n "${GPS_LATITUDE}" ]] && [[ -n "${GPS_LONGITUDE}" ]] && FAKE_GPS="true"
 
 # -----------------------------------------------------------------------------
+# Other settings
+# -----------------------------------------------------------------------------
+
+STAT_INTERVAL=${STAT_INTERVAL:-30}
+PUSH_TIMEOUT=${PUSH_TIMEOUT:-100}
+
+# -----------------------------------------------------------------------------
 # Whitelists
 # -----------------------------------------------------------------------------
 
@@ -773,6 +780,8 @@ echo -e ""
 
 echo -e "${COLOR_INFO}Extra${COLOR_END}"
 echo -e "${COLOR_INFO}------------------------------------------------------------------${COLOR_END}"
+echo -e "${COLOR_INFO}Stat interval: ${STAT_INTERVAL}${COLOR_END}"
+echo -e "${COLOR_INFO}Push timeout:  ${PUSH_TIMEOUT}${COLOR_END}"
 if [[ $HAS_GPS -eq 1 ]]; then
 echo -e "${COLOR_INFO}GPS Device:    ${GPS_DEV}${COLOR_END}"
 fi
@@ -824,6 +833,8 @@ for CONFIG_FILE in $GLOBAL_CONFIG_FILE $LOCAL_CONFIG_FILE; do
         sed -i "s#\"server_address\":\s*.*,#\"server_address\": \"$SERVER_HOST\",#" "$CONFIG_FILE"
         sed -i "s#\"serv_port_up\":\s*.*,#\"serv_port_up\": $SERVER_PORT,#" "$CONFIG_FILE"
         sed -i "s#\"serv_port_down\":\s*.*,#\"serv_port_down\": $SERVER_PORT,#" "$CONFIG_FILE"
+        sed -i "s#\"stat_interval\":\s*.*,#\"stat_interval\": ${STAT_INTERVAL:-30},#" "$CONFIG_FILE"
+        sed -i "s#\"push_timeout_ms\":\s*.*,#\"push_timeout_ms\": ${PUSH_TIMEOUT:-100},#" "$CONFIG_FILE"
         sed -i "s#\"fake_gps\":\s*.*,#\"fake_gps\": $FAKE_GPS,#" "$CONFIG_FILE"
         sed -i "s#\"ref_latitude\":\s*.*,#\"ref_latitude\": ${GPS_LATITUDE:-0},#" "$CONFIG_FILE"
         sed -i "s#\"ref_longitude\":\s*.*,#\"ref_longitude\": ${GPS_LONGITUDE:-0},#" "$CONFIG_FILE"

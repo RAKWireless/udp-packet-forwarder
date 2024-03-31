@@ -237,6 +237,8 @@ Variable Name | Value | Description | Default
 **`SERVER_HOST`** | `STRING` | URL of the server | Based on `TTS_REGION` and `TTS_TENANT`
 **`SERVER_PORT`** | `INT` | Port the server is listening to | `1700`
 **`BAND`** | `STRING` | Regional parameters identifier | `eu_863_870`
+**`STAT_INTERVAL`** | `INT` | Interval betwen heartbeat messages (in seconds) | 30
+**`PUSH_TIMEOUT`** | `INT` | Timeout when pushing messages to LNS (in milliseconds) | 100
 **`HAS_GPS`** | 0 or 1 | Set to 0 to disable onbard GPS | `0`, if `GPS_DEV` is defined and exists it will be set to `1` by default
 **`GPS_DEV`** | `STRING` | Where the GPS is connected to. Don't set it if you don't know what this means | `/dev/ttyAMA0` or `/dev/i2c-1` for known models
 **`GPS_LATITUDE`** | `DOUBLE` | Report this latitude for the gateway | 

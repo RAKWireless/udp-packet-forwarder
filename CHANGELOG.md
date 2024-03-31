@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.4.4 (Unreleased)
+
+* Option to set stat_interval and push_timeoout_ms from environment variables
+
 ## 2.4.3 (2024-03-19)
 
 * Support for auto-discover for Picocell concentrators
