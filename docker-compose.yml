@@ -125,7 +125,7 @@ services:
       # Interva between heartbeat messages. Defaults to 30s.
       #STAT_INTERVAL: 30
 
-      # Timeout when pushing messages to LNS. Defaults to 100ms. Increase if missing messages on LNS side.
+      # Timeout when pushing messages to LNS. Defaults to 100ms. Increase if missing packets on LNS side.
       #PUSH_TIMEOUT: 100
 
       # ------------------------------------------------

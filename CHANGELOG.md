@@ -1,6 +1,6 @@
 # Changelog
 
-## 2.4.4 (Unreleased)
+## 2.4.4 (2024-04-02)
 
 * Option to set stat_interval and push_timeoout_ms from environment variables
 
