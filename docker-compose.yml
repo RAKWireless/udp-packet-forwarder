@@ -122,7 +122,7 @@ services:
       # Other settings
       # ------------------------------------------------
 
-      # Interva between heartbeat messages. Defaults to 30s.
+      # Interval between heartbeat messages. Defaults to 30s.
       #STAT_INTERVAL: 30
 
       # Timeout when pushing messages to LNS. Defaults to 100ms. Increase if missing packets on LNS side.
