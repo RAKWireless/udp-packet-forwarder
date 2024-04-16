@@ -85,6 +85,8 @@ Supported RAK LoRa concentrators:
   * [RAK2287](https://store.rakwireless.com/products/rak2287-lpwan-gateway-concentrator-module)
 * SX1303
   * [RAK5146](https://store.rakwireless.com/collections/wislink-lpwan/products/wislink-lpwan-concentrator-rak5146)
+  * [RAK5166](https://store.rakwireless.com/products/rak5166-rak5167-concentrator-card-m-2-form-factor-innovation-for-lorawan-applications-sx1303-lora-core-usb-gps-lbt)
+  * [RAK5167](https://store.rakwireless.com/products/rak5166-rak5167-concentrator-card-m-2-form-factor-innovation-for-lorawan-applications-sx1303-lora-core-usb-gps-lbt)
 * SX1308
   * [RAK2287](https://store.rakwireless.com/products/rak2287-lpwan-gateway-concentrator-module)
   * RAK2246

@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.4.5 (Unreleased)
+
+* Support or RAK5166 and RAK5167 boards
+
 ## 2.4.4 (2024-04-02)
 
 * Option to set stat_interval and push_timeoout_ms from environment variables
