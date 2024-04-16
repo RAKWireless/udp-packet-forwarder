@@ -1,6 +1,6 @@
 # Changelog
 
-## 2.4.5 (Unreleased)
+## 2.4.5 (2024-04-16)
 
 * Support or RAK5166 and RAK5167 boards
 * Images based on bookworm release
