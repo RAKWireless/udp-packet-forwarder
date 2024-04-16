@@ -3,6 +3,8 @@
 ## 2.4.5 (Unreleased)
 
 * Support or RAK5166 and RAK5167 boards
+* Images based on bookworm release
+* Remove support for ARMv6 arch
 
 ## 2.4.4 (2024-04-02)
 

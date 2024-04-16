@@ -36,7 +36,7 @@ Deploy a LoRaWAN gateway running the UDP Packet Forwarder protocol in a docker c
 
 Main features:
 
-* Support for AMD64 (x86_64), ARMv8, ARMv7 and ARMv6 architectures.
+* Support for AMD64 (x86_64), ARMv8 and ARMv7 architectures.
 * Support for SX1301, SX1302, SX1303 and SX1308 concentrators.
 * Support for 2.4GHz LoRa concentrators based on Semtech's reference design (SX1280).
 * Support for SPI and USB concentrators.
@@ -59,7 +59,6 @@ As long as the host can run docker containers, the UDP Packet Forwarder service 
 * AMD64: most PCs out there
 * ARMv8: Raspberry Pi 3/4/5, 400, Compute Module 3/4, Zero 2 W,...
 * ARMv7: Raspberry Pi 2,...
-* ARMv6: Raspberry Pi 1, Zero W, Compute Module 1,...
 
 > **NOTE**: you will need an OS in the host machine, for some SBC like a Raspberry Pi that means and SD card with an OS (like Rasperry Pi OS) flashed on it.
 
@@ -180,7 +179,7 @@ In case you can not pull the already built image from Docker Hub or if you want 
 docker buildx bake --load aarch64
 ```
 
-Once built (it will take some minutes) you can bring it up by using `xoseperez/udp-packet-forwarder:aarch64` as the image name in your `docker-compose.yml` file. If you are not in an ARMv8 64 bits machine (like a Raspberry Pi 4) you can change the `aarch64` with `armv7hf` (ARMv7), `armv6l` (ARMv6) or `amd64` (AMD64).
+Once built (it will take some minutes) you can bring it up by using `xoseperez/udp-packet-forwarder:aarch64` as the image name in your `docker-compose.yml` file. If you are not in an ARMv8 64 bits machine (like a Raspberry Pi 4) you can change the `aarch64` with `armv7hf` (ARMv7) or `amd64` (AMD64).
 
 The included build script in the root folder can be user to build all architectures and (optionally) push the to a repository. The default repository is `https://hub.docker.com/r/rakwireless/udp-packet-forwarder` which you don't have permissions to push to (obviously), but you can easily push the images to your own repo by doing:
 

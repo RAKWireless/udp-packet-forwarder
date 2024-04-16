@@ -101,10 +101,6 @@ manifests:
     platform:
       architecture: arm
       os: linux  
-  - image: ${REGISTRY}:armv6l-latest
-    platform:
-      architecture: arm
-      os: linux  
   - image: ${REGISTRY}:amd64-latest
     platform:
       architecture: amd64
