@@ -4,7 +4,7 @@ ARG TAG
 ARG BUILD_DATE
 
 # Builder image
-FROM balenalib/${IMAGE}-debian:buster-build as builder
+FROM balenalib/${IMAGE}-debian:bookworm-build as builder
 ARG ARCH
 
 # Install required development packages
@@ -19,7 +19,7 @@ RUN chmod +x build
 RUN ARCH=${ARCH} ./build
 
 # Runner image
-FROM balenalib/${IMAGE}-debian:buster-run as runner
+FROM balenalib/${IMAGE}-debian:bookworm-run as runner
 ARG ARCH
 ARG TAG
 ARG BUILD_DATE

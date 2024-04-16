@@ -9,6 +9,7 @@ group "default" {
 
 target "armv6l" {
     tags = ["${REGISTRY}:armv6l-latest"]
+    dockerfile = "Dockerfile.armv6l"
     args = {
         "ARCH" = "armv6l",
         "IMAGE" = "armv5e",
