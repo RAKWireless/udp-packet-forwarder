@@ -74,6 +74,9 @@ function chip_id {
     local DEVICE=$2
     local CHIP_ID
 
+    # No support for SX1301 concentrators
+    [[ "${DESIGN}" =~ ^v2 ]] && return 0
+
     [[ "$DEVICE" == *"ttyV"* ]] && TIMEOUT=10 || TIMEOUT=3
 
     if [[ "$DESIGN" == "auto" ]] || [[ "$DESIGN" == "corecell" ]]; then
@@ -111,6 +114,10 @@ function discover_concentrator {
     local INTERFACE=$1
     local DESIGN=$2
     local RADIO_NUM=$3
+    local DEVICE
+
+    # No support for SX1301 concentrators
+    [[ "${DESIGN}" =~ ^v2 ]] && return 0
 
     # Grab potential devices based on interface
     if [[ "${INTERFACE}" == "AUTO" ]]; then
@@ -315,8 +322,10 @@ for CONFIG_FILE in $GLOBAL_CONFIG_FILE $LOCAL_CONFIG_FILE; do
 
         # Get Device
         get_json_property "$CONFIG_FILE" '.[].com_path'
-        [[ -n "${PROPERTY_VALUE}" ]] && DEVICE=$PROPERTY_VALUE
-	    [[ "${DEVICE}" == *"spi"* ]] && INTERFACE="SPI" || INTERFACE="USB"
+        if [[ -n "${PROPERTY_VALUE}" ]]; then    
+            DEVICE=$PROPERTY_VALUE
+	        [[ "${DEVICE}" == *"spi"* ]] && INTERFACE="SPI" || INTERFACE="USB"
+        fi
 
         # Get Interface
         get_json_property "$CONFIG_FILE" '.[].com_type'
@@ -504,20 +513,25 @@ if [[ -z "${DEVICE}" ]] || [[ "${DEVICE}" == "AUTO" ]]; then
 
     unset DEVICE
 
-    # Look for concentrator
-    discover_concentrator "${INTERFACE:-AUTO}" "${DESIGN:-AUTO}" "${RADIO_NUM:-1}"
-    if [[ $? -ne 0 ]]; then
+    # Auto-discover not support for SX1301 concentrators
+    if [[ ! "${DESIGN}" =~ ^v2 ]]; then
 
-        DESIGN=${RESPONSE[0]}
-        DEVICE=${RESPONSE[1]}
-        CHIP_ID=${RESPONSE[2]}
+        # Look for concentrator
+        discover_concentrator "${INTERFACE:-AUTO}" "${DESIGN:-AUTO}" "${RADIO_NUM:-1}"
+        if [[ $? -ne 0 ]]; then
 
-    else
+            DESIGN=${RESPONSE[0]}
+            DEVICE=${RESPONSE[1]}
+            CHIP_ID=${RESPONSE[2]}
 
-        echo -e "${COLOR_WARNING}ERROR: DEVICE set to auto discover but no concentrator found! (INTERFACE set to $INTERFACE) ${COLOR_END}"
+        else
+
+            echo -e "${COLOR_WARNING}ERROR: DEVICE set to auto discover but no concentrator found! (INTERFACE set to $INTERFACE) ${COLOR_END}"
+
+        fi
 
     fi
-
+    
 fi
 
 # -----------------------------------------------------------------------------
@@ -853,7 +867,7 @@ done
 
 # Setup libraries and USB rules
 ldconfig
-udevadm control --reload-rules && udevadm trigger
+udevadm control --reload-rules &>/dev/null && udevadm trigger
 
 # -----------------------------------------------------------------------------
 # Start packet forwarder
