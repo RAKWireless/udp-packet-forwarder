@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.4.7 (Unreleased)
+
+* Force main process to run as PID 1
+
 ## 2.4.6 (2024-06-19)
 
 * Fix default DEVICE on v2 concentrators (SX1301)

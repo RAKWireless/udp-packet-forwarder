@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-VERSION=2.4.6
+VERSION=2.4.7
 
 # -----------------------------------------------------------------------------
 # Colors
@@ -301,6 +301,8 @@ MODE="DYNAMIC"
 for CONFIG_FILE in $GLOBAL_CONFIG_FILE $LOCAL_CONFIG_FILE; do
 
     if [[ -f "$CONFIG_FILE" ]]; then
+
+        echo -e "${COLOR_INFO}Reading existing ${CONFIG_FILE} file${COLOR_END}"
 
         # Set as static configuration mode
         MODE="STATIC"
@@ -876,7 +878,7 @@ udevadm control --reload-rules &>/dev/null && udevadm trigger
 /app/config/reset_lgw.sh
 
 if [[ "${DESIGN}" == "picocell" ]]; then
-    stdbuf -oL /app/artifacts/"${DESIGN}"/lora_pkt_fwd -d "${DEVICE}"
+    exec stdbuf -oL /app/artifacts/"${DESIGN}"/lora_pkt_fwd -d "${DEVICE}"
 else
-    stdbuf -oL /app/artifacts/"${DESIGN}"/lora_pkt_fwd
+    exec stdbuf -oL /app/artifacts/"${DESIGN}"/lora_pkt_fwd
 fi 
