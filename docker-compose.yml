@@ -97,6 +97,7 @@ services:
       # ------------------------------------------------
 
       # Same for the GPS
+      #GPS_DEV: "/dev/ttyS0"
       #GPS_DEV: "/dev/i2c-1"
       #GPS_DEV: "/dev/ttyUSB1"
 
