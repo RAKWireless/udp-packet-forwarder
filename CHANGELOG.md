@@ -1,8 +1,9 @@
 # Changelog
 
-## 2.4.7 (Unreleased)
+## 2.4.7 (2024-12-11)
 
 * Force main process to run as PID 1
+* Patch nb_fields length mismatch on sx1302 hal
 
 ## 2.4.6 (2024-06-19)
 
