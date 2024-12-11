@@ -28,17 +28,28 @@ index 881442f..2af7bac 100644
  
  ### EOF
 diff --git a/libloragw/inc/loragw_hal.h b/libloragw/inc/loragw_hal.h
-index 6e153a3..45981b5 100644
+index 6e153a3..7e4f412 100644
 --- a/libloragw/inc/loragw_hal.h
 +++ b/libloragw/inc/loragw_hal.h
-@@ -45,6 +45,7 @@ License: Revised BSD License, see LICENSE.TXT file include in the project
- #define LGW_HAL_SUCCESS     0
- #define LGW_HAL_ERROR       -1
- #define LGW_LBT_NOT_ALLOWED 1
-+#define LGW_LBT_ISSUE       1
+@@ -403,6 +403,18 @@ typedef enum lgw_spectral_scan_status_e {
+ /* -------------------------------------------------------------------------- */
+ /* --- PUBLIC FUNCTIONS PROTOTYPES ------------------------------------------ */
  
- /* radio-specific parameters */
- #define LGW_XTAL_FREQU      32000000            /* frequency of the RF reference oscillator */
++/**
++@brief Set I2C device path
++@param path         Path to the I2C device driver
++*/
++int lgw_i2c_set_path(const char *path);
++
++/**
++@brief Set I2C temperature sensor address
++@param addr         Address of the I2C temperature sensor.
++*/
++int lgw_i2c_set_temp_sensor_addr(uint8_t addr);
++
+ /**
+ @brief Configure the gateway board
+ @param conf structure containing the configuration parameters
 diff --git a/libloragw/inc/loragw_mcu.h b/libloragw/inc/loragw_mcu.h
 index 0d0588f..c81d2e7 100644
 --- a/libloragw/inc/loragw_mcu.h
@@ -308,7 +319,7 @@ index 9a81a08..2314e32 100644
  }
 +#endif
 diff --git a/libloragw/src/loragw_gps.c b/libloragw/src/loragw_gps.c
-index ca9602d..15a1b39 100644
+index ca9602d..7d07c8b 100644
 --- a/libloragw/src/loragw_gps.c
 +++ b/libloragw/src/loragw_gps.c
 @@ -30,6 +30,12 @@ License: Revised BSD License, see LICENSE.TXT file include in the project
@@ -403,6 +414,15 @@ index ca9602d..15a1b39 100644
  /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
  
  int lgw_gps_disable(int fd) {
+@@ -535,7 +604,7 @@ enum gps_msg lgw_parse_nmea(const char *serial_buff, int buff_size) {
+         memcpy(parser_buf, serial_buff, buff_size);
+         parser_buf[buff_size] = '\0';
+         nb_fields = str_chop(parser_buf, buff_size, ',', str_index, ARRAY_SIZE(str_index));
+-        if (nb_fields != 13) {
++        if ( (nb_fields != 13) && (nb_fields != 14) ) {
+             DEBUG_MSG("Warning: invalid RMC sentence (number of fields)\n");
+             return IGNORED;
+         }
 diff --git a/libloragw/src/loragw_hal.c b/libloragw/src/loragw_hal.c
 index ffc8ec0..0963480 100644
 --- a/libloragw/src/loragw_hal.c
