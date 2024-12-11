@@ -80,7 +80,7 @@ fi
 if [[ ${PUSH} -eq 1 ]]; then
   time docker buildx bake --push "${TARGETS[@]}"
 else
-  time docker buildx bake "${TARGETS[@]}"
+  time docker buildx bake --load "${TARGETS[@]}"
 fi
 
 # -----------------------------------------------------------------------------
