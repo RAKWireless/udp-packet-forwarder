@@ -4,11 +4,72 @@ ARG TAG
 ARG BUILD_DATE
 
 # Builder image
-FROM balenalib/${IMAGE:-empty}-debian:bookworm-build AS builder
+FROM debian:bookworm-slim AS builder
 ARG ARCH
 
-# Install required development packages
-RUN install_packages libftdi-dev libusb-dev
+# Install utility
+COPY builder/install_packages /usr/sbin/
+RUN chmod 0755 /usr/sbin/install_packages
+
+# Base packages
+RUN install_packages \
+    sudo \
+    ca-certificates \
+    findutils \
+    gnupg \
+    dirmngr \
+    inetutils-ping \
+    netbase \
+    curl \
+    udev \
+    procps \
+    $( \
+        if apt-cache show 'iproute' 2>/dev/null | grep -q '^Version:'; then \
+        echo 'iproute'; \
+        else \
+        echo 'iproute2'; \
+        fi \
+    )
+  
+# Build packages
+RUN install_packages \
+    ca-certificates \
+    curl \
+    wget \
+    bzr \
+    git \
+    mercurial \
+    openssh-client \
+    subversion \
+    autoconf \
+    build-essential \
+    imagemagick \
+    libbz2-dev \
+    libcurl4-openssl-dev \
+    libevent-dev \
+    libffi-dev \
+    libglib2.0-dev \
+    libjpeg-dev \
+    libftdi-dev \
+    libusb-dev \
+    libmagickcore-dev \
+    libmagickwand-dev \
+    libncurses-dev \
+    libpq-dev \
+    libreadline-dev \
+    libsqlite3-dev \
+    libssl-dev \
+    libxml2-dev \
+    libxslt-dev \
+    libyaml-dev \
+    zlib1g-dev \
+    $( \
+        if apt-cache show 'default-libmariadb-dev' 2>/dev/null | grep -q '^Version:'; then \
+            echo 'default-libmariadb-dev'; \
+        else \
+            echo 'libmariadb-dev'; \
+        fi \
+    )
 
 # Switch to working directory for our app
 WORKDIR /app
@@ -19,10 +80,34 @@ RUN chmod +x build
 RUN ARCH=${ARCH} ./build
 
 # Runner image
-FROM balenalib/${IMAGE:-empty}-debian:bookworm-run AS runner
+FROM debian:bookworm-slim AS runner
 ARG ARCH
 ARG TAG
 ARG BUILD_DATE
+
+# Install utility
+COPY builder/install_packages /usr/sbin/
+RUN chmod 0755 /usr/sbin/install_packages
+
+# Base packages
+RUN install_packages \
+    sudo \
+    ca-certificates \
+    findutils \
+    gnupg \
+    dirmngr \
+    inetutils-ping \
+    netbase \
+    curl \
+    udev \
+    procps \
+    $( \
+        if apt-cache show 'iproute' 2>/dev/null | grep -q '^Version:'; then \
+        echo 'iproute'; \
+        else \
+        echo 'iproute2'; \
+        fi \
+    )
 
 # Image metadata
 LABEL maintainer="RAKwireless"
@@ -36,7 +121,6 @@ LABEL org.label-schema.vcs-url="https://github.com/RAKWireless/udp-packet-forwar
 LABEL org.label-schema.vcs-ref=${TAG}
 LABEL org.label-schema.arch=${ARCH}
 LABEL org.label-schema.license="BSD License 2.0"
-LABEL io.balena.features.balena-api="1"
 
 # Install required runtime packages
 RUN install_packages jq vim libftdi1 gpiod socat

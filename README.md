@@ -1,6 +1,6 @@
 # LoRaWAN UDP Packet Forwarder Protocol for Docker
 
-This project deploys a LoRaWAN gateway with UDP Packet Forwarder protocol using Docker. It runs on any amd64/x86_64 PC, or a SBC like a Raspberry Pi 3/4, Compute Module 3/4 or balenaFin using SX1301, SX1302, SX1303 or SX1308 LoRa concentrators.
+This project deploys a LoRaWAN gateway with UDP Packet Forwarder protocol using Docker. It runs on any amd64/x86_64 PC, or a SBC like a Raspberry Pi 3/4/5 or Compute Module 3/4/5 using SX1301, SX1302, SX1303 or SX1308 LoRa concentrators.
 
 ## Table of Contents
 
@@ -13,7 +13,6 @@ This project deploys a LoRaWAN gateway with UDP Packet Forwarder protocol using 
 - [Deploy the code](#deploy-the-code)
     - [Via docker-compose](#via-docker-compose)
     - [Build the image not required](#build-the-image-not-required)
-    - [Deploy with balena](#deploy-with-balena)
 - [Configure the Gateway](#configure-the-gateway)
     - [Service Variables](#service-variables)
     - [Auto-discover](#auto-discover)
@@ -101,8 +100,6 @@ Supported RAK LoRa concentrators:
 
 You will need docker and docker-compose (optional but recommended) on the machine (see below for instal·lation instructions). You will also need a an account at a LoRaWAN Network Server, for instance a [The Things Network account](https://console.cloud.thethings.network/).
 
-> You can also deploy this using balenaCloud, check the `Deploy with balena` section below.
-
 
 ## Installing docker & docker-compose on the OS
 
@@ -186,31 +183,6 @@ The included build script in the root folder can be user to build all architectu
 ```
 REGISTRY="registry.example.com/udp-packet-forwarder" ./build.sh --push
 ```
-
-
-
-
-### Deploy with balena
-
-[![balena deploy button](https://www.balena.io/deploy.svg)](https://dashboard.balena-cloud.com/deploy?repoUrl=https://github.com/RAKWireless/udp-packet-forwarder/)
-
-You need to set the variables upon deployment according to your installed concentrator / gateway. Example for a RAK 5146 USB installed on a RAK 2287 Pi Hat on a RPi 3:
-
-````
-INTERFACE: "USB"
-HAS_LTE: "0"
-RESET_GPIO: 0
-DEVICE: "/dev/ttyUSB0"
-GPS_DEV: "/dev/ttyAMA0"
-GATEWAY_EUI: "<YourGatewayEUI>"
-TTN_REGION: "eu1"
-BAND: "eu_863_870"
-# leave the remaining variables as default
-````
-
-You can also set other variables like `GPS_LATITUDE`, `GPS_LONGITUDE` and `GPS_ALTITUDE` for fake GPS.
-
-For more details, read the `Service Variables` section below.
 
 ## Configure the Gateway
 
@@ -385,8 +357,6 @@ Or query what will the EUI be using the chip ID (only for Corecell concentrators
 ```
 docker run -it --privileged --rm -e GATEWAY_EUI_SOURCE=chip rakwireless/udp-packet-forwarder:latest gateway_eui
 ```
-
-If using balenaCloud the ```EUI``` will be visible as a TAG on the device dashboard. Be careful when you copy the tag, as other characters will be copied.
 
 The output will one or more possible EUIs (if using `GATEWAY_EUI_SOURCE=chip` with more than once concentrator plugged-in):
 

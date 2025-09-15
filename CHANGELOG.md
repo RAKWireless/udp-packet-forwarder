@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.4.8 (2025-09-15)
+
+* Remove dependency from balenalib images
+* Remove balena-specific options
+
 ## 2.4.7 (2024-12-11)
 
 * Force main process to run as PID 1
