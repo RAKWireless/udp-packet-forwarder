@@ -51,7 +51,7 @@ services:
       #RADIO_NUM: 1
 
       # GPIO to reset SPI concentrators (these are the defaults)
-      #USE_LIBGPIOD: 0 # set to 1 by default for Raspberry Pi 5
+      #USE_LIBGPIOD: 1 # set to 0 to use legacy sysfs access (not recommended)
       #GPIO_CHIP: "gpiochip0" # set to "gpiochip4" by default for Raspberry Pi 5
       #RESET_GPIO: 17
       #POWER_EN_GPIO: 0

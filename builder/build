@@ -119,6 +119,7 @@ print_header "Building UDP Packet Forwarder for Corecells"
 clone_patch_and_make https://github.com/Lora-net/sx1302_hal.git V2.1.0
 mkdir -p artifacts/corecell
 cp sx1302_hal/packet_forwarder/lora_pkt_fwd artifacts/corecell/
+cp sx1302_hal/util_spectral_scan/spectral_scan artifacts/corecell/
 cp sx1302_hal/util_chip_id/chip_id artifacts/corecell/
 rm -rf sx1302_hal
 

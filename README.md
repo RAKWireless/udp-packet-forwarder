@@ -197,7 +197,7 @@ Variable Name | Value | Description | Default
 **`INTERFACE`** | `SPI`, `USB`, `NET` or `AUTO` | Concentrator interface. Set to `AUTO` to use with auto-discover feature. | If `MODEL` is defined it will get the interface type from it if possible, defaults to `AUTO` if the auto-discover feature is enabled or `SPI` otherwise.
 **`DEVICE`** | `STRING` or `AUTO` | Where the concentrator is connected to. Set to `AUTO` for auto-discover. | `/dev/spidev0.0` for SPI concentrators, `/dev/ttyUSB0` or `/dev/ttyACM0` for USB concentrators, the host IP port 3333 for `NET` connections
 **`SPI_SPEED`** | `INT` | Speed of the SPI interface | `2000000` (2MHz) for SX1301/8 concentrators, `8000000` (8Mhz) for the rest
-**`USE_LIBGPIOD`** | `INT` | Use new gpiod library to access GPIO or old filesystem (sooon deprecated) | `0` (`1` for Raspberry Pi 5)
+**`USE_LIBGPIOD`** | `INT` | Use `sysfs` (0) or `libgpiod` (1) to manage the GPIOs | 1
 **`GPIO_CHIP`** | `STRING` | Chip ID to use with gpiod | `gpiochip0` (`gpiochip4` for Raspberry Pi 5)
 **`RESET_GPIO`** | `INT` | GPIO number that resets (Broadcom pin number) | `17`
 **`POWER_EN_GPIO`** | `INT` | GPIO number that enables power (by pulling HIGH) to the concentrator (Broadcom pin number). 0 means not required | `0`
@@ -291,7 +291,6 @@ services:
     network_mode: host
     environment:
       MODEL: "RAK5146"
-      USE_LIBGPIOD: 1
       GPIO_CHIP: "gpiochip4"
 ```
 
