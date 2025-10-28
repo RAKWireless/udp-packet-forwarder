@@ -57,18 +57,16 @@ fi
 command -v gpioset >/dev/null 2>&1 && USE_LIBGPIOD=1
 USE_LIBGPIOD=${USE_LIBGPIOD:-0}
 
-# Raspberry Pi requires using libgpiod with gpiochip4
-if [[ $( grep -c "Raspberry Pi 5" /proc/cpuinfo ) -eq 0  ]]; then
-    GPIO_CHIP=${GPIO_CHIP:-gpiochip0}
-else
-    GPIO_CHIP=${GPIO_CHIP:-gpiochip4}
-fi
+# Find proper chip to use with libgpiod
+if [[ $USE_LIBGPIOD -eq 1 ]]; then
+    GPIO_CHIP=${GPIO_CHIP:-$( gpiodetect | grep pinctrl | head -1 | awk '{print $1}' )}
+fi 
 
 # Create reset file
-if [[ $USE_LIBGPIOD -eq 0 ]]; then
-    cp reset.sh.legacy reset_lgw.sh
-else
+if [[ $USE_LIBGPIOD -eq 1 ]]; then
     cp reset.sh.gpiod reset_lgw.sh
+else
+    cp reset.sh.legacy reset_lgw.sh
 fi
 sed -i "s#{{GPIO_CHIP}}#${GPIO_CHIP:-gpiochip0}#" reset_lgw.sh
 sed -i "s#{{RESET_GPIO}}#${RESET_GPIO:-6,17}#" reset_lgw.sh
